@@ -25,8 +25,8 @@ namespace grad::mem
         size_t size() const;
         size_t nrefs() const;
 
-        T* data(size_t = 0);
-        const T* data(size_t = 0) const;
+        __device__ T* data(size_t = 0);
+        __device__ const T* data(size_t = 0) const;
 
         template<typename T>
         friend storage<T>* make_storage(size_t, T);
@@ -104,13 +104,13 @@ namespace grad::mem
     }
 
     template<typename T>
-    T *storage<T>::data(size_t offset)
+    __device__ T *storage<T>::data(size_t offset)
     {
         return _data + offset;
     }
 
     template<typename T>
-    const T *storage<T>::data(size_t offset) const
+    __device__ const T *storage<T>::data(size_t offset) const
     {
         return _data + offset;
     }

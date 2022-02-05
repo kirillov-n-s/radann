@@ -28,7 +28,7 @@ CMAKE_CUDA_ARCHITECTURES:STRING=52
 CMAKE_CUDA_COMPILER:FILEPATH=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/nvcc.exe
 
 //Flags used by the CUDA compiler during all build types.
-CMAKE_CUDA_FLAGS:STRING=-D_WINDOWS -Xcompiler=" /EHsc"
+CMAKE_CUDA_FLAGS:STRING=--extended-lambda
 
 //Flags used by the CUDA compiler during DEBUG builds.
 CMAKE_CUDA_FLAGS_DEBUG:STRING=-Xcompiler="-Zi -Ob0 -Od /RTC1"
