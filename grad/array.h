@@ -2,13 +2,13 @@
 #include <iomanip>
 #include "shape.h"
 #include "storage.h"
-#include "kernel.h"
-#include "xtmp/expr.h"
+#include "ops/expr.h"
+#include "assign.h"
 
 namespace grad
 {
     template <typename T, size_t N>
-    class array : public xtmp::expr<array<T, N>>
+    class array : public ops::expr<array<T, N>>
     {
     public:
         using value_type = T;
@@ -17,15 +17,16 @@ namespace grad
     private:
         mem::storage<T>* _storage;
         shape<N> _shape;
+        size_t _size;
         size_t _offset = 0;
 
     public:
-        array(const grad::shape<N>&, T = 0);
+        array(const grad::shape<N>&);
         template<typename InputIterator>
         array(const grad::shape<N>&, InputIterator, InputIterator);
         array(const grad::shape<N>&, const std::initializer_list<T>&);
         template<typename Expr>
-        array(const xtmp::expr<Expr>&);
+        array(const ops::expr<Expr>&);
 
         array(mem::storage<T>*, const grad::shape<N>&, size_t);
         array(const array&);
@@ -40,10 +41,10 @@ namespace grad
 
         array& operator>>=(const array&);
 
-        /*array& operator+=(const array&);
+        array& operator+=(const array&);
         array& operator-=(const array&);
         array& operator*=(const array&);
-        array& operator/=(const array&);*/
+        array& operator/=(const array&);
 
         const grad::shape<N>& shape() const;
         size_t shape(size_t) const;
@@ -60,7 +61,7 @@ namespace grad
         const T* data() const;
         T* data();
 
-        GRAD_DEVICE T operator[](size_t) const;
+        size_t size() const;
     };
 
     template<typename T, size_t N>
@@ -70,20 +71,23 @@ namespace grad
 namespace grad
 {
     template<typename T, size_t N>
-    array<T, N>::array(const grad::shape<N> &shape, T val)
-        : _shape(shape),
-        _storage(mem::make_storage(shape.length(), val))
-    {}
+    array<T, N>::array(const grad::shape<N> &shape)
+        : _shape(shape)
+    {
+        _size = _shape.length();
+        _storage = mem::make_storage<T>(_size);
+    }
 
     template<typename T, size_t N>
     template<typename InputIterator>
     array<T, N>::array(const grad::shape<N> &shape, InputIterator first, InputIterator last)
-        : _shape(shape),
-        _storage(mem::make_storage(shape.length(), T(0)))
+        : _shape(shape)
     {
-        if (std::distance(first, last) > _shape.length())
+        _size = _shape.length();
+        if (std::distance(first, last) > _size)
             throw std::invalid_argument("Iterator range exceeds array shape.");
-        kernel::copy(first, last, data());
+        _storage = mem::make_storage<T>(_size);
+        std::copy(first, last, data());
     }
 
     template<typename T, size_t N>
@@ -93,8 +97,9 @@ namespace grad
 
     template<typename T, size_t N>
     array<T, N>::array(mem::storage<T> *storage, const grad::shape<N> &shape, size_t offset)
-        : _storage(storage), _shape(shape), _offset(offset)
+        : _storage(storage), _shape(shape),  _offset(offset)
     {
+        _size = _shape.length();
         _storage->add_ref();
     }
 
@@ -105,11 +110,12 @@ namespace grad
 
     template<typename T, size_t N>
     template<typename Expr>
-    array<T, N>::array(const xtmp::expr<Expr> &expr)
-        : _shape(expr.self().shape()),
-        _storage(mem::make_storage(expr.self().shape().length(), T(0)))
+    array<T, N>::array(const ops::expr<Expr> &expr)
+        : _shape(expr.self().shape())
     {
-        kernel::assign(data(), _shape.length(), expr.self());
+        _size = _shape.length();
+        _storage = mem::make_storage<T>(_size);
+        par::assign(data(), _size, expr.self());
     }
 
     template<typename T, size_t N>
@@ -122,9 +128,9 @@ namespace grad
     template<typename InputIterator>
     array<T, N> &array<T, N>::assign(InputIterator first, InputIterator last)
     {
-        if (std::distance(first, last) > _shape.length())
+        if (std::distance(first, last) > _size)
             throw std::invalid_argument("Iterator range exceeds array shape.");
-        kernel::copy(first, last, data());
+        std::copy(first, last, data());
         return *this;
     }
 
@@ -183,7 +189,7 @@ namespace grad
     template<size_t M>
     array<T, M> array<T, N>::reshape(const grad::shape<M> &shape)
     {
-        if (_shape.length() != shape.length())
+        if (_size != shape.length())
             throw std::invalid_argument("Array shape overall length mismatch.");
         return { _storage, shape, _offset };
     }
@@ -208,30 +214,31 @@ namespace grad
     }
 
     template<typename T, size_t N>
-    GRAD_DEVICE T array<T, N>::operator[](size_t i) const
+    size_t array<T, N>::size() const
     {
-        return _storage->data(_offset)[i % _shape.length()];
+        return _size;
     }
 
     template<typename T, size_t N>
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
         const auto& shape = array.shape();
+        const auto& data = array.data();
         std::array<size_t, shape.rank> prods;
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
-        out << "0x" << array.data() << '\n';
+        out << "0x" << data << '\n';
         //out << std::scientific << std::setprecision(std::numeric_limits<T>::max_digits10) << std::right << std::showpos << std::setfill(' ');
-        out << shape << '[' << array[0] << ", ";
+        out << shape << '[' << data[0] << ", ";
 
         auto n = shape.length();
         for (size_t i = 1; i < n - 1; i++)
         {
             for (const auto& p : prods)
                 out << (i % p == 0 ? "\n" : "");
-            out << (i % prods[0] == 0 ? " " : "") << array[i] << ", ";
+            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";
         }
 
-        return out << array[n - 1] << "]\n\n";
+        return out << data[n - 1] << "]\n\n";
     }
 }

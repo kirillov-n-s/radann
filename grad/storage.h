@@ -11,7 +11,7 @@ namespace grad::mem
         size_t _size;
         size_t _nrefs = 1;
 
-        storage(size_t, T);
+        storage(size_t);
         storage(const T*, size_t);
 
         ~storage();
@@ -25,11 +25,11 @@ namespace grad::mem
         size_t size() const;
         size_t nrefs() const;
 
-        __device__ T* data(size_t = 0);
-        __device__ const T* data(size_t = 0) const;
+        T* data(size_t = 0);
+        const T* data(size_t = 0) const;
 
         template<typename T>
-        friend storage<T>* make_storage(size_t, T);
+        friend storage<T>* make_storage(size_t);
         template<typename T>
         friend storage<T>* make_storage(const T*, size_t);
     };
@@ -38,14 +38,10 @@ namespace grad::mem
 namespace grad::mem
 {
     template<typename T>
-    storage<T>::storage(size_t size, T val)
+    storage<T>::storage(size_t size)
         : _size(size * sizeof(T))
     {
         auto status = cudaMallocManaged(&_data, _size);
-        cudaDeviceSynchronize();
-        if (status != cudaError_t::cudaSuccess)
-            throw std::bad_alloc();
-        status = cudaMemset(_data, val, _size);
         cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();
@@ -104,21 +100,21 @@ namespace grad::mem
     }
 
     template<typename T>
-    __device__ T *storage<T>::data(size_t offset)
+    T *storage<T>::data(size_t offset)
     {
         return _data + offset;
     }
 
     template<typename T>
-    __device__ const T *storage<T>::data(size_t offset) const
+    const T *storage<T>::data(size_t offset) const
     {
         return _data + offset;
     }
 
     template<typename T>
-    storage<T> *make_storage(size_t size, T val)
+    storage<T> *make_storage(size_t size)
     {
-        return new storage<T> { size, val };
+        return new storage<T> { size };
     }
 
     template<typename T>

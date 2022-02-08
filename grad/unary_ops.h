@@ -1,36 +1,37 @@
 #pragma once
-#include "xtmp/unary_ftors_base.h"
-#include "xtmp/unary_ftors_ext.h"
+#include "ops/unary.h"
+#include "ops/unary_functors.h"
+#include "ops/unary_functors_ext.h"
 
 namespace grad
 {
     template <typename Arg>
-    inline auto operator-(const xtmp::expr<Arg>&);
+    inline auto operator-(const ops::expr<Arg>&);
 
     template <typename Arg>
-    inline auto abs(const xtmp::expr<Arg>&);
+    inline auto abs(const ops::expr<Arg>&);
 
     template <typename Arg>
-    inline auto sqrt(const xtmp::expr<Arg>&);
+    inline auto sqrt(const ops::expr<Arg>&);
 }
 
 namespace grad
 {
     template <typename Arg>
-    inline auto operator-(const xtmp::expr<Arg> &arg)
+    inline auto operator-(const ops::expr<Arg> &arg)
     {
-        return xtmp::make_unary_expr(xtmp::neg{}, arg);
+        return ops::make_unary(ops::neg{}, arg);
     }
 
     template <typename Arg>
-    inline auto abs(const xtmp::expr<Arg> &arg)
+    inline auto abs(const ops::expr<Arg> &arg)
     {
-        return xtmp::make_unary_expr(xtmp::abs{}, arg);
+        return ops::make_unary(ops::abs{}, arg);
     }
 
     template <typename Arg>
-    inline auto sqrt(const xtmp::expr<Arg> &arg)
+    inline auto sqrt(const ops::expr<Arg> &arg)
     {
-        return xtmp::make_unary_expr(xtmp::sqrt{}, arg);
+        return ops::make_unary(ops::sqrt{}, arg);
     }
 }

@@ -7,7 +7,7 @@ Cuda compilation tools, release 11.6, V11.6.55
 Build cuda_11.6.r11.6/compiler.30794723_0
 Compiling the CUDA compiler identification source file "CMakeCUDACompilerId.cu" succeeded.
 Compiler: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/nvcc.exe 
-Build flags: 
+Build flags: --generate-code=arch=compute_61,code=[compute_61,sm_61]
 Id flags: --keep;--keep-dir;tmp -v
 
 The output was:
@@ -139,16 +139,16 @@ C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeF
 CMakeCUDACompilerId.cu
 #$ cl.exe @"tmp/CMakeCUDACompilerId.cpp1.ii.res" > "tmp/CMakeCUDACompilerId.cpp1.ii" 
 CMakeCUDACompilerId.cu
-#$ cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"
-#$ ptxas -arch=sm_52 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" 
-#$ fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" 
+#$ cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_61 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"
+#$ ptxas -arch=sm_61 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_61.cubin" 
+#$ fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=ptx,sm=61,file=tmp/CMakeCUDACompilerId.ptx" "--image3=kind=elf,sm=61,file=tmp/CMakeCUDACompilerId.sm_61.cubin" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" 
 #$ cl.exe @"tmp/CMakeCUDACompilerId.cpp4.ii.res" > "tmp/CMakeCUDACompilerId.cpp4.ii" 
 CMakeCUDACompilerId.cu
 #$ cudafe++ --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" 
 #$ cl.exe @"tmp/CMakeCUDACompilerId.obj.res" -Fo"tmp/CMakeCUDACompilerId.obj" 
 CMakeCUDACompilerId.cudafe1.cpp
-#$ nvlink -optf "tmp/a_dlink.sm_52.cubin.optf"
-#$ fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" 
+#$ nvlink -optf "tmp/a_dlink.sm_61.cubin.optf"
+#$ fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=61,file=tmp/a_dlink.sm_61.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" 
 #$ cl.exe @"tmp/a_dlink.obj.res" -Fo"tmp/a_dlink.obj" 
 link.stub
 #$ cl.exe @"tmp/a.exe.res" -Fe"a.exe" 
@@ -178,29 +178,29 @@ Parsed CUDA nvcc implicit link information from above output:
   considering line: [CMakeCUDACompilerId.cu]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.cpp1.ii.res" > "tmp/CMakeCUDACompilerId.cpp1.ii" ]
   considering line: [CMakeCUDACompilerId.cu]
-  considering line: [cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
-  considering line: [ptxas -arch=sm_52 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" ]
-  considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
+  considering line: [cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_61 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
+  considering line: [ptxas -arch=sm_61 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_61.cubin" ]
+  considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=ptx,sm=61,file=tmp/CMakeCUDACompilerId.ptx" "--image3=kind=elf,sm=61,file=tmp/CMakeCUDACompilerId.sm_61.cubin" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.cpp4.ii.res" > "tmp/CMakeCUDACompilerId.cpp4.ii" ]
   considering line: [CMakeCUDACompilerId.cu]
   considering line: [cudafe++ --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" ]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.obj.res" -Fo"tmp/CMakeCUDACompilerId.obj" ]
   considering line: [CMakeCUDACompilerId.cudafe1.cpp]
-  considering line: [nvlink -optf "tmp/a_dlink.sm_52.cubin.optf"]
+  considering line: [nvlink -optf "tmp/a_dlink.sm_61.cubin.optf"]
     ignoring nvlink line
-  considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
+  considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=61,file=tmp/a_dlink.sm_61.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
   considering line: [cl.exe @"tmp/a_dlink.obj.res" -Fo"tmp/a_dlink.obj" ]
   considering line: [link.stub]
   considering line: [cl.exe @"tmp/a.exe.res" -Fe"a.exe" ]
-    extracted link line: [cl.exe -D__CUDA_ARCH_LIST__=520 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
+    extracted link line: [cl.exe -D__CUDA_ARCH_LIST__=610 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
   considering line: [   Creating library a.lib and object a.exp]
   considering line: []
 
   link line regex: [^( *|.*[/\])(link\.exe|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  link line: [cuda-fake-ld cl.exe -D__CUDA_ARCH_LIST__=520 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
+  link line: [cuda-fake-ld cl.exe -D__CUDA_ARCH_LIST__=610 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
     arg [cuda-fake-ld] ==> ignore
     arg [cl.exe] ==> recognize MSVC cl
-    arg [-D__CUDA_ARCH_LIST__=520] ==> ignore
+    arg [-D__CUDA_ARCH_LIST__=610] ==> ignore
     arg [-nologo] ==> ignore
     arg [C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj] ==> ignore
     arg [C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj] ==> ignore
@@ -232,30 +232,30 @@ Parsed CUDA nvcc include information from above output:
   considering line: [CMakeCUDACompilerId.cu]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.cpp1.ii.res" > "tmp/CMakeCUDACompilerId.cpp1.ii" ]
   considering line: [CMakeCUDACompilerId.cu]
-  considering line: [cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_52 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
-  considering line: [ptxas -arch=sm_52 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_52.cubin" ]
-  considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=elf,sm=52,file=tmp/CMakeCUDACompilerId.sm_52.cubin" "--image3=kind=ptx,sm=52,file=tmp/CMakeCUDACompilerId.ptx" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
+  considering line: [cicc --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed  -arch compute_61 -m64 --no-version-ident -ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 --include_file_name "CMakeCUDACompilerId.fatbin.c" -tused --gen_module_id_file --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.c" --stub_file_name "tmp/CMakeCUDACompilerId.cudafe1.stub.c" --gen_device_file_name "tmp/CMakeCUDACompilerId.cudafe1.gpu"  "tmp/CMakeCUDACompilerId.cpp1.ii" -o "tmp/CMakeCUDACompilerId.ptx"]
+  considering line: [ptxas -arch=sm_61 -m64 "tmp/CMakeCUDACompilerId.ptx"  -o "tmp/CMakeCUDACompilerId.sm_61.cubin" ]
+  considering line: [fatbinary --create="tmp/CMakeCUDACompilerId.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " "--image3=kind=ptx,sm=61,file=tmp/CMakeCUDACompilerId.ptx" "--image3=kind=elf,sm=61,file=tmp/CMakeCUDACompilerId.sm_61.cubin" --embedded-fatbin="tmp/CMakeCUDACompilerId.fatbin.c" ]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.cpp4.ii.res" > "tmp/CMakeCUDACompilerId.cpp4.ii" ]
   considering line: [CMakeCUDACompilerId.cu]
   considering line: [cudafe++ --microsoft_version=1929 --msvc_target_version=1929 --compiler_bindir "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/HostX64/x64/../../../../../../.." --sdk_dir "C:/Program Files (x86)/Windows Kits/10/" --display_error_number --orig_src_file_name "CMakeCUDACompilerId.cu" --orig_src_path_name "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\CMakeCUDACompilerId.cu" --allow_managed --m64 --parse_templates --gen_c_file_name "tmp/CMakeCUDACompilerId.cudafe1.cpp" --stub_file_name "CMakeCUDACompilerId.cudafe1.stub.c" --module_id_file_name "tmp/CMakeCUDACompilerId.module_id" "tmp/CMakeCUDACompilerId.cpp4.ii" ]
   considering line: [cl.exe @"tmp/CMakeCUDACompilerId.obj.res" -Fo"tmp/CMakeCUDACompilerId.obj" ]
   considering line: [CMakeCUDACompilerId.cudafe1.cpp]
-  considering line: [nvlink -optf "tmp/a_dlink.sm_52.cubin.optf"]
+  considering line: [nvlink -optf "tmp/a_dlink.sm_61.cubin.optf"]
     ignoring nvlink line
-  considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=52,file=tmp/a_dlink.sm_52.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
+  considering line: [fatbinary --create="tmp/a_dlink.fatbin" -64 --cicc-cmdline="-ftz=0 -prec_div=1 -prec_sqrt=1 -fmad=1 " -link "--image3=kind=elf,sm=61,file=tmp/a_dlink.sm_61.cubin" --embedded-fatbin="tmp/a_dlink.fatbin.c" ]
   considering line: [cl.exe @"tmp/a_dlink.obj.res" -Fo"tmp/a_dlink.obj" ]
   considering line: [link.stub]
   considering line: [cl.exe @"tmp/a.exe.res" -Fe"a.exe" ]
-    extracted link line: [cl.exe -D__CUDA_ARCH_LIST__=520 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
+    extracted link line: [cl.exe -D__CUDA_ARCH_LIST__=610 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
   considering line: [   Creating library a.lib and object a.exp]
   considering line: []
   found 'INCLUDES=' string: ["-IC:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../include"  ]
 
   link line regex: [^( *|.*[/\])(link\.exe|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  link line: [cuda-fake-ld cl.exe -D__CUDA_ARCH_LIST__=520 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
+  link line: [cuda-fake-ld cl.exe -D__CUDA_ARCH_LIST__=610 -nologo "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj" "C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj" -link -INCREMENTAL:NO   "/LIBPATH:C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/../lib/x64"  cudadevrt.lib  cudart_static.lib -Fe"a.exe" ]
     arg [cuda-fake-ld] ==> ignore
     arg [cl.exe] ==> recognize MSVC cl
-    arg [-D__CUDA_ARCH_LIST__=520] ==> ignore
+    arg [-D__CUDA_ARCH_LIST__=610] ==> ignore
     arg [-nologo] ==> ignore
     arg [C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\a_dlink.obj] ==> ignore
     arg [C:\Users\user\Desktop\University\!Coursework\coursework\cmake-build-debug\CMakeFiles\3.21.1\CompilerIdCUDA\tmp\CMakeCUDACompilerId.obj] ==> ignore
@@ -275,14 +275,14 @@ Parsed CUDA nvcc include information from above output:
 Detecting CUDA compiler ABI info compiled with the following output:
 Change Dir: C:/Users/user/Desktop/University/!Coursework/coursework/cmake-build-debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Users/user/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/ninja/win/ninja.exe cmTC_82e33 && [1/2] Building CUDA object CMakeFiles\cmTC_82e33.dir\CMakeCUDACompilerABI.cu.obj
+Run Build Command(s):C:/Users/user/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/ninja/win/ninja.exe cmTC_c3d21 && [1/2] Building CUDA object CMakeFiles\cmTC_c3d21.dir\CMakeCUDACompilerABI.cu.obj
 cl : Command line warning D9002 : ignoring unknown option '-v'
 CMakeCUDACompilerABI.cu
 cl : Command line warning D9002 : ignoring unknown option '-v'
 CMakeCUDACompilerABI.cu
 CMakeCUDACompilerABI.cu
 cl : Command line warning D9002 : ignoring unknown option '-v'
-[2/2] Linking CUDA executable cmTC_82e33.exe
+[2/2] Linking CUDA executable cmTC_c3d21.exe
 
 
 
@@ -294,14 +294,14 @@ Parsed CUDA implicit link information from above output:
   link line regex: [^( *|.*[/\])(link\.exe|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: C:/Users/user/Desktop/University/!Coursework/coursework/cmake-build-debug/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):C:/Users/user/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/ninja/win/ninja.exe cmTC_82e33 && [1/2] Building CUDA object CMakeFiles\cmTC_82e33.dir\CMakeCUDACompilerABI.cu.obj]
+  ignore line: [Run Build Command(s):C:/Users/user/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.6777.58/bin/ninja/win/ninja.exe cmTC_c3d21 && [1/2] Building CUDA object CMakeFiles\cmTC_c3d21.dir\CMakeCUDACompilerABI.cu.obj]
   ignore line: [cl : Command line warning D9002 : ignoring unknown option '-v']
   ignore line: [CMakeCUDACompilerABI.cu]
   ignore line: [cl : Command line warning D9002 : ignoring unknown option '-v']
   ignore line: [CMakeCUDACompilerABI.cu]
   ignore line: [CMakeCUDACompilerABI.cu]
   ignore line: [cl : Command line warning D9002 : ignoring unknown option '-v']
-  ignore line: [[2/2] Linking CUDA executable cmTC_82e33.exe]
+  ignore line: [[2/2] Linking CUDA executable cmTC_c3d21.exe]
   ignore line: []
   ignore line: []
   implicit libs: []
