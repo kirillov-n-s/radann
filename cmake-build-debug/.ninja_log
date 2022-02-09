@@ -1,5 +1,0 @@
-# ninja log v5
-1	6667	6660369350592736	CMakeFiles/coursework.dir/main.cu.obj	1d1f8701c408330c
-6668	10043	6660369384436217	CMakeFiles/coursework.dir/cmake_device_link.obj	1a41f0f5ac108961
-10043	10641	6660369389649870	coursework.exe	cbe11e83de4ec8a3
-2	204	6660451075170722	build.ninja	4010a47fc04ed12d

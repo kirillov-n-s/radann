@@ -1,0 +1,8 @@
+//
+// Created by user on 09.02.2022.
+//
+
+#ifndef COURSEWORK_SCALAR_FUNCTORS_H
+#define COURSEWORK_SCALAR_FUNCTORS_H
+
+#endif //COURSEWORK_SCALAR_FUNCTORS_H

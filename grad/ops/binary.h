@@ -22,11 +22,10 @@ namespace grad::ops
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
-        shape<rank> shape() const;
+        auto shape() const;
 
         template<typename Op, typename Lhs, typename Rhs>
-        friend inline
-        binary<Op, Lhs, Rhs> make_binary(const Op&, const expr<Lhs>&, const expr<Rhs>&);
+        friend inline auto make_binary(const Op&, const expr<Lhs>&, const expr<Rhs>&);
     };
 }
 
@@ -44,14 +43,15 @@ namespace grad::ops
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    shape<binary<Op, Lhs, Rhs>::rank> binary<Op, Lhs, Rhs>::shape() const
+    auto binary<Op, Lhs, Rhs>::shape() const
     {
         return _lhs.shape();
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    inline binary<Op, Lhs, Rhs> make_binary(const Op& op, const expr<Lhs>& lhs, const expr<Rhs>& rhs)
+    inline auto make_binary(const Op& op, const expr<Lhs>& lhs, const expr<Rhs>& rhs)
     {
-        return { op, lhs.self(), rhs.self() };
+        return binary<Op, decltype(get_access(lhs.self())), decltype(get_access(rhs.self()))>
+                { op, get_access(lhs.self()), get_access(rhs.self()) };
     }
 }

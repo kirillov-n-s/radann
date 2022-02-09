@@ -181,7 +181,7 @@ namespace grad
     {
         auto index = make_shape(indices...);
         auto extents = _shape.template slice<index.rank>();
-        auto offset = _shape.offset( index);
+        auto offset = _shape.offset(index);
         return { _storage, extents, offset };
     }
 

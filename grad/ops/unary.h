@@ -20,10 +20,10 @@ namespace grad::ops
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
-        shape<rank> shape() const;
+        auto shape() const;
 
         template<typename Op, typename Arg>
-        friend inline unary<Op, Arg> make_unary(const Op&, const expr<Arg>&);
+        friend inline auto make_unary(const Op&, const expr<Arg>&);
     };
 }
 
@@ -41,14 +41,14 @@ namespace grad::ops
     }
 
     template<typename Op, typename Arg>
-    shape<unary<Op, Arg>::rank> unary<Op, Arg>::shape() const
+    auto unary<Op, Arg>::shape() const
     {
         return _arg.shape();
     }
 
     template<typename Op, typename Arg>
-    inline unary<Op, Arg> make_unary(const Op& op, const expr<Arg>& arg)
+    inline auto make_unary(const Op& op, const expr<Arg>& arg)
     {
-        return { op, arg.self() };
+        return unary<Op, decltype(get_access(arg.self()))> { op, get_access(arg.self()) };
     }
 }

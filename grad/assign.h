@@ -14,7 +14,6 @@ namespace grad::par
     {
         auto num_threads = 256;
         kernels::assign<<<(size - 1) / num_threads + 1, num_threads>>>(data, size, expr);
-        //cudaMemPrefetchAsync(data, size, 0);
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::runtime_error("");

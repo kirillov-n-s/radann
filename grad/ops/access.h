@@ -24,18 +24,24 @@ namespace grad::ops
 
         shape<N> shape() const;
 
-        template<typename T, size_t N>
-        friend inline access<T, N> get_access(const array<T, N>&);
+        /*template<typename T, size_t N>
+        friend inline access<T, N> get_access(const array<T, N>&);*/
+
+        template<typename Expr>
+        friend inline auto get_access(const Expr&);
     };
 
-    template <typename T, size_t N>
-    struct expr<array<T, N>>
-    {
-        inline access<T, N> self() const
-        {
-            return get_access(static_cast<const array<T, N>&>(*this));
-        }
-    };
+    template<typename Expr, typename = void>
+    struct has_subscript : std::false_type {};
+
+    template<typename Expr>
+    struct has_subscript<Expr,
+        std::enable_if_t<std::is_same_v<decltype(&Expr::operator[]),
+            typename Expr::value_type (Expr::*)(size_t) const>>>
+                : std::true_type {};
+
+    /*template<typename Expr, std::enable_if_t<has_subscript<Expr>::value, bool> = true>
+    inline Expr get_access(const Expr&);*/
 }
 
 namespace grad::ops
@@ -57,9 +63,24 @@ namespace grad::ops
         return _shape;
     }
 
-    template<typename T, size_t N>
+    template<typename Expr>
+    inline auto get_access(const Expr &expr)
+    {
+        if constexpr (has_subscript<Expr>::value)
+            return expr;
+        else
+            return access<typename Expr::value_type, Expr::rank> { expr.data(), expr.size(), expr.shape() };
+    }
+
+    /*template<typename T, size_t N>
     inline access<T, N> get_access(const array<T, N> &array)
     {
         return { array.data(), array.size(), array.shape() };
-    }
+    }*/
+
+    /*template<typename Expr, std::enable_if_t<has_subscript<Expr>::value, bool>>
+    inline Expr get_access(const Expr &expr)
+    {
+        return expr;
+    }*/
 }
