@@ -1,6 +1,6 @@
 #pragma once
 
-namespace grad::ops
+namespace grad::functor
 {
     struct neg
     {

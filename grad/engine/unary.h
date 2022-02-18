@@ -1,7 +1,7 @@
 #pragma once
 #include "access.h"
 
-namespace grad::ops
+namespace grad::engine
 {
     template<typename Op, typename Arg>
     class unary : public expr<unary<Op, Arg>>
@@ -27,7 +27,7 @@ namespace grad::ops
     };
 }
 
-namespace grad::ops
+namespace grad::engine
 {
     template<typename Op, typename Arg>
     unary<Op, Arg>::unary(const Op &op, const Arg &arg)

@@ -163,14 +163,12 @@ namespace grad
     template <size_t N>
     std::ostream& operator<<(std::ostream &out, const shape<N> &shape)
     {
-        auto first = shape.begin();
-        auto last = shape.end();
-        if (first == last)
+        if constexpr(N == 0)
             return out;
 
         out << '(';
-        std::copy(first, last - 1, std::ostream_iterator<size_t>(out, ", "));
-        out << shape[shape.rank - 1];
+        std::copy(shape.begin(), shape.end() - 1, std::ostream_iterator<size_t>(out, ", "));
+        out << shape[N - 1];
         return out << ")\n";
     }
 }

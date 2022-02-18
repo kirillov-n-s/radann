@@ -3,7 +3,7 @@ project(coursework CUDA)
 
 set(CMAKE_CUDA_STANDARD 17)
 
-add_executable(coursework main.cu grad/shape.h grad/array.h grad/storage.h grad/ops/expr.h grad/ops/unary_functors.h grad/unary_ops.h grad/ops/binary_functors.h grad/binary_ops.h grad/ops/unary_functors_ext.h grad/kernels/assign.h grad/assign.h grad/ops/unary.h grad/ops/binary.h grad/ops/access.h grad/ops/scalar.h grad/ops/scalar_functors.h grad/generators.h)
+add_executable(coursework main.cu grad/shape.h grad/array.h grad/cuda/storage.h grad/engine/expr.h grad/functor/unary.h grad/unary.h grad/functor/binary.h grad/binary.h grad/functor/ext.h grad/cuda/kernel/assign.h grad/cuda/assign.h grad/engine/unary.h grad/engine/binary.h grad/engine/access.h grad/engine/term.h grad/functor/sequence.h grad/sequence.h grad/functor/random.h grad/random.h grad/cuda/random.h grad/grad.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

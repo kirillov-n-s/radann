@@ -1,16 +1,24 @@
-#include "grad/array.h"
-#include "grad/unary_ops.h"
-#include "grad/binary_ops.h"
-#include "grad/generators.h"
+#include "grad/grad.h"
 
 int main()
 {
-    grad::array<float, 2> x { grad::make_shape(4, 3), { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } };
-    grad::array<float, 1> y { grad::make_shape(4), { -9, -9, -9, -9 } };
-    grad::array<float, 0> z { grad::make_shape(), { 3.14 } };
-    grad::array<float, 2> w = (x + grad::abs(y)) * -grad::cos(z);
+    grad::array<float, 1> x
+    {
+        grad::make_shape(150),
+        grad::arithm(0.f, 0.1f)
+    };
 
-    std::cout << x << y << z << w;
+    grad::array<float, 1> f = grad::sqrt(x) + grad::sin(x);
+    grad::array<float, 1> g = f + grad::normal<float>() / 3._fC;
+    grad::array<float, 1> h = f + grad::uniform<float>() - 0.5_fC;
+
+    std::cout << "BEFORE\n\n" << x << f << g << h;
+
+    f += grad::array<float, 1> (grad::make_shape(10), 2._fC);
+    g *= grad::constant(-1.f);
+    h = g - 2._fC;
+
+    std::cout << "\n\nAFTER\n\n" << x << f << g << h;
 
     std::cin.get();
 }

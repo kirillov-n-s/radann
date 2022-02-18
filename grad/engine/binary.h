@@ -1,8 +1,7 @@
 #pragma once
-#include <type_traits>
 #include "access.h"
 
-namespace grad::ops
+namespace grad::engine
 {
     template<typename Op, typename Lhs, typename Rhs>
     class binary : public expr<binary<Op, Lhs, Rhs>>
@@ -29,10 +28,10 @@ namespace grad::ops
     };
 }
 
-namespace grad::ops
+namespace grad::engine
 {
     template<typename Op, typename Lhs, typename Rhs>
-    ops::binary<Op, Lhs, Rhs>::binary(const Op &op, const Lhs &lhs, const Rhs &rhs)
+    engine::binary<Op, Lhs, Rhs>::binary(const Op &op, const Lhs &lhs, const Rhs &rhs)
         : _op(op), _lhs(lhs), _rhs(rhs) {}
 
     template<typename Op, typename Lhs, typename Rhs>

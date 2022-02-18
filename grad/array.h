@@ -1,50 +1,58 @@
 #pragma once
 #include <iomanip>
 #include "shape.h"
-#include "storage.h"
-#include "ops/expr.h"
-#include "assign.h"
+#include "cuda/storage.h"
+#include "cuda/assign.h"
+#include "engine/access.h"
 
 namespace grad
 {
     template <typename T, size_t N>
-    class array : public ops::expr<array<T, N>>
+    class array : public engine::expr<array<T, N>>
     {
     public:
         using value_type = T;
         static const size_t rank = N;
 
     private:
-        mem::storage<T>* _storage;
+        cuda::storage<T>* _storage;
         shape<N> _shape;
         size_t _size;
         size_t _offset = 0;
+
+        array(cuda::storage<T>*, const grad::shape<N>&, size_t);
 
     public:
         array(const grad::shape<N>&);
         template<typename InputIterator>
         array(const grad::shape<N>&, InputIterator, InputIterator);
         array(const grad::shape<N>&, const std::initializer_list<T>&);
-        template<typename Expr>
-        array(const ops::expr<Expr>&);
 
-        array(mem::storage<T>*, const grad::shape<N>&, size_t);
         array(const array&);
+
+        template<typename Expr>
+        array(const grad::shape<N>&, const engine::expr<Expr>&);
+        template<typename Expr>
+        array(const engine::expr<Expr>&);
 
         ~array();
 
         template<typename InputIterator>
         array& assign(InputIterator, InputIterator);
-
-        array& operator=(const array&);
         array& operator=(const std::initializer_list<T>&);
 
-        array& operator>>=(const array&);
+        template<typename Expr>
+        array& operator=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator+=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator-=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator*=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator/=(const engine::expr<Expr>&);
 
-        array& operator+=(const array&);
-        array& operator-=(const array&);
-        array& operator*=(const array&);
-        array& operator/=(const array&);
+        array& operator>>=(const array&);
 
         const grad::shape<N>& shape() const;
         size_t shape(size_t) const;
@@ -71,11 +79,19 @@ namespace grad
 namespace grad
 {
     template<typename T, size_t N>
+    array<T, N>::array(cuda::storage<T> *storage, const grad::shape<N> &shape, size_t offset)
+        : _storage(storage), _shape(shape),  _offset(offset)
+    {
+        _size = _shape.length();
+        _storage->add_ref();
+    }
+
+    template<typename T, size_t N>
     array<T, N>::array(const grad::shape<N> &shape)
         : _shape(shape)
     {
         _size = _shape.length();
-        _storage = mem::make_storage<T>(_size);
+        _storage = cuda::make_storage<T>(_size);
     }
 
     template<typename T, size_t N>
@@ -86,7 +102,7 @@ namespace grad
         _size = _shape.length();
         if (std::distance(first, last) > _size)
             throw std::invalid_argument("Iterator range exceeds array shape.");
-        _storage = mem::make_storage<T>(_size);
+        _storage = cuda::make_storage<T>(_size);
         std::copy(first, last, data());
     }
 
@@ -96,27 +112,25 @@ namespace grad
     {}
 
     template<typename T, size_t N>
-    array<T, N>::array(mem::storage<T> *storage, const grad::shape<N> &shape, size_t offset)
-        : _storage(storage), _shape(shape),  _offset(offset)
-    {
-        _size = _shape.length();
-        _storage->add_ref();
-    }
-
-    template<typename T, size_t N>
     array<T, N>::array(const array &other)
         : array(other._storage, other._shape, other._offset)
     {}
 
     template<typename T, size_t N>
     template<typename Expr>
-    array<T, N>::array(const ops::expr<Expr> &expr)
-        : _shape(expr.self().shape())
+    array<T, N>::array(const grad::shape<N> &shape, const engine::expr<Expr> &expr)
+        : _shape(shape)
     {
         _size = _shape.length();
-        _storage = mem::make_storage<T>(_size);
-        par::assign(data(), _size, expr.self());
+        _storage = cuda::make_storage<T>(_size);
+        cuda::assign<cuda::assign_t::reg>(data(), _size, engine::get_access(expr.self()));
     }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N>::array(const engine::expr<Expr> &expr)
+        : array(expr.self().shape(), expr)
+    {}
 
     template<typename T, size_t N>
     array<T, N>::~array()
@@ -135,19 +149,49 @@ namespace grad
     }
 
     template<typename T, size_t N>
-    array<T, N> &array<T, N>::operator=(const array &other)
-    {
-        if (this == &other)
-            return *this;
-        if (_shape != other._shape)
-            throw std::invalid_argument("Array shape mismatch.");
-        _storage->copy(other._storage->data(other._offset), _offset);
-    }
-
-    template<typename T, size_t N>
     array<T, N> &array<T, N>::operator=(const std::initializer_list<T> &data)
     {
         return assign(data.begin(), data.end());
+    }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N> &array<T, N>::operator=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign<cuda::assign_t::reg>(data(), _size, engine::get_access(expr.self()));
+        return *this;
+    }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N> &array<T, N>::operator+=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign<cuda::assign_t::add>(data(), _size, engine::get_access(expr.self()));
+        return *this;
+    }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N> &array<T, N>::operator-=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign<cuda::assign_t::sub>(data(), _size, engine::get_access(expr.self()));
+        return *this;
+    }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N> &array<T, N>::operator*=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign<cuda::assign_t::mul>(data(), _size, engine::get_access(expr.self()));
+        return *this;
+    }
+
+    template<typename T, size_t N>
+    template<typename Expr>
+    array<T, N> &array<T, N>::operator/=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign<cuda::assign_t::div>(data(), _size, engine::get_access(expr.self()));
+        return *this;
     }
 
     template<typename T, size_t N>
@@ -222,13 +266,16 @@ namespace grad
     template<typename T, size_t N>
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
-        const auto& shape = array.shape();
         const auto& data = array.data();
+        if constexpr(N == 0)
+            return out << data << "\n[" << *data << "]\n";
+
+        const auto& shape = array.shape();
         std::array<size_t, shape.rank> prods;
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
         out << "0x" << data << '\n';
-        //out << std::scientific << std::setprecision(std::numeric_limits<T>::max_digits10) << std::right << std::showpos << std::setfill(' ');
+        /*out << std::scientific << std::setprecision(std::numeric_limits<T>::max_digits10) << std::right << std::showpos;*/
         out << shape << '[' << data[0] << ", ";
 
         auto n = shape.length();

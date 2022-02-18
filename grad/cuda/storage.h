@@ -1,7 +1,7 @@
 #pragma once
 #include "cuda_runtime.h"
 
-namespace grad::mem
+namespace grad::cuda
 {
     template <typename T>
     class storage
@@ -35,7 +35,7 @@ namespace grad::mem
     };
 }
 
-namespace grad::mem
+namespace grad::cuda
 {
     template<typename T>
     storage<T>::storage(size_t size)
