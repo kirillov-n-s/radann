@@ -8,7 +8,7 @@ namespace grad::engine
     {
     public:
         using value_type = std::common_type_t<typename Lhs::value_type, typename Rhs::value_type>;
-        static const size_t rank = Lhs::rank;
+        static constexpr size_t rank = std::max(Lhs::rank, Rhs::rank);
 
     private:
         Op _op;
@@ -44,13 +44,15 @@ namespace grad::engine
     template<typename Op, typename Lhs, typename Rhs>
     auto binary<Op, Lhs, Rhs>::shape() const
     {
-        return _lhs.shape();
+        if constexpr(Lhs::rank > Rhs::rank)
+            return _lhs.shape();
+        else
+            return _rhs.shape();
     }
 
     template<typename Op, typename Lhs, typename Rhs>
     inline auto make_binary(const Op& op, const expr<Lhs>& lhs, const expr<Rhs>& rhs)
     {
-        return binary<Op, decltype(get_access(lhs.self())), decltype(get_access(rhs.self()))>
-                { op, get_access(lhs.self()), get_access(rhs.self()) };
+        return binary { op, get_access(lhs.self()), get_access(rhs.self()) };
     }
 }

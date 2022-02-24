@@ -5,6 +5,7 @@
 #include "binary.h"
 #include "sequence.h"
 #include "random.h"
+#include "linalg.h"
 
 using grad::operator+;
 using grad::operator-;

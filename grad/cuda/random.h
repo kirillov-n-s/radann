@@ -1,12 +1,9 @@
 #pragma once
-#include <type_traits>
 #include "curand_kernel.h"
+#include "../meta/meta.h"
 
 namespace grad::cuda
 {
-    template <typename T>
-    inline constexpr bool always_false_v = false;
-
     template <typename T>
     class random
     {
@@ -37,7 +34,7 @@ namespace grad::cuda
         else if constexpr(std::is_same_v<T, double>)
             return curand_uniform_double(&_state);
         else
-            static_assert(always_false_v<T>, "PRNG for that type is not specialized.");
+            static_assert(meta::always_false_v<T>, "PRNG not specialized for this type.");
     }
 
     template <typename T>
@@ -48,6 +45,6 @@ namespace grad::cuda
         else if constexpr(std::is_same_v<T, double>)
             return curand_normal_double(&_state);
         else
-            static_assert(always_false_v<T>, "PRNG for that type is not specialized.");
+            static_assert(meta::always_false_v<T>, "PRNG not specialized for this type.");
     }
 }

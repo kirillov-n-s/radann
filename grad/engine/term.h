@@ -8,7 +8,7 @@ namespace grad::engine
     {
     public:
         using value_type = typename Seq::value_type;
-        static const size_t rank = 0;
+        static constexpr size_t rank = 0;
 
     private:
         Seq _seq;
@@ -48,6 +48,6 @@ namespace grad::engine
     template<typename Seq>
     inline auto make_term(const Seq &seq)
     {
-        return term<Seq> { seq };
+        return term { seq };
     }
 }

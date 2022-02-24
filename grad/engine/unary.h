@@ -8,7 +8,7 @@ namespace grad::engine
     {
     public:
         using value_type = typename Arg::value_type;
-        static const size_t rank = Arg::rank;
+        static constexpr size_t rank = Arg::rank;
 
     private:
         Op _op;
@@ -49,6 +49,6 @@ namespace grad::engine
     template<typename Op, typename Arg>
     inline auto make_unary(const Op& op, const expr<Arg>& arg)
     {
-        return unary<Op, decltype(get_access(arg.self()))> { op, get_access(arg.self()) };
+        return unary { op, get_access(arg.self()) };
     }
 }

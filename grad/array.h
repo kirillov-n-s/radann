@@ -12,7 +12,7 @@ namespace grad
     {
     public:
         using value_type = T;
-        static const size_t rank = N;
+        static constexpr size_t rank = N;
 
     private:
         cuda::storage<T>* _storage;
@@ -123,7 +123,7 @@ namespace grad
     {
         _size = _shape.length();
         _storage = cuda::make_storage<T>(_size);
-        cuda::assign<cuda::assign_t::reg>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, engine::get_access(expr.self()));
     }
 
     template<typename T, size_t N>
@@ -158,7 +158,7 @@ namespace grad
     template<typename Expr>
     array<T, N> &array<T, N>::operator=(const engine::expr<Expr> &expr)
     {
-        cuda::assign<cuda::assign_t::reg>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, engine::get_access(expr.self()));
         return *this;
     }
 
@@ -166,7 +166,7 @@ namespace grad
     template<typename Expr>
     array<T, N> &array<T, N>::operator+=(const engine::expr<Expr> &expr)
     {
-        cuda::assign<cuda::assign_t::add>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, *this + expr);
         return *this;
     }
 
@@ -174,7 +174,7 @@ namespace grad
     template<typename Expr>
     array<T, N> &array<T, N>::operator-=(const engine::expr<Expr> &expr)
     {
-        cuda::assign<cuda::assign_t::sub>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, *this - expr);
         return *this;
     }
 
@@ -182,7 +182,7 @@ namespace grad
     template<typename Expr>
     array<T, N> &array<T, N>::operator*=(const engine::expr<Expr> &expr)
     {
-        cuda::assign<cuda::assign_t::mul>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, *this * expr);
         return *this;
     }
 
@@ -190,7 +190,7 @@ namespace grad
     template<typename Expr>
     array<T, N> &array<T, N>::operator/=(const engine::expr<Expr> &expr)
     {
-        cuda::assign<cuda::assign_t::div>(data(), _size, engine::get_access(expr.self()));
+        cuda::assign(data(), _size, *this / expr);
         return *this;
     }
 

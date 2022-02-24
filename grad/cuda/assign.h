@@ -4,18 +4,29 @@
 
 namespace grad::cuda
 {
-    template <assign_t A, typename T, typename Expr>
+    template <typename T, typename Expr>
     void assign(T*, size_t, const Expr&);
 }
 
 namespace grad::cuda
 {
-    template<assign_t A, typename T, typename Expr>
+    template<typename T, typename Expr>
     void assign(T *data, size_t size, const Expr &expr)
     {
-        auto num_threads = 256;
-        auto num_blocks = (size - 1) / num_threads + 1;
-        kernel::assign<A><<<num_blocks, num_threads>>>(data, size, expr);
+        int block_dim, min_grid_dim;
+        cudaOccupancyMaxPotentialBlockSize(
+                &min_grid_dim,
+                &block_dim,
+                kernel::assign<T, Expr>,
+                0,
+                size);
+        auto grid_dim = (size - 1) / block_dim + 1;
+
+        int device;
+        cudaGetDevice(&device);
+        cudaMemPrefetchAsync(data, size, device);
+
+        kernel::assign<<<grid_dim, block_dim>>>(data, size, expr);
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::runtime_error("Assign kernel failed. CUDA error status " + std::to_string(status));

@@ -12,7 +12,7 @@ namespace grad
     public:
         using const_iterator = typename std::array<size_t, N>::const_iterator;
         using const_reverse_iterator = typename std::array<size_t, N>::const_reverse_iterator;
-        static const size_t rank = N;
+        static constexpr size_t rank = N;
 
     private:
         std::array<size_t, N> _data;

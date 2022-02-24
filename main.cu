@@ -1,24 +1,19 @@
 #include "grad/grad.h"
+#include <chrono>
+
+using timer = std::chrono::system_clock;
 
 int main()
 {
-    grad::array<float, 1> x
-    {
-        grad::make_shape(150),
-        grad::arithm(0.f, 0.1f)
-    };
+    size_t n = 10;
 
-    grad::array<float, 1> f = grad::sqrt(x) + grad::sin(x);
-    grad::array<float, 1> g = f + grad::normal<float>() / 3._fC;
-    grad::array<float, 1> h = f + grad::uniform<float>() - 0.5_fC;
+    grad::array<float, 1> x { grad::make_shape(n), grad::arithm(1.f, 1.f) };
+    grad::array<float, 1> y { grad::make_shape(n), grad::arithm(-1.f, -1.f) };
+    grad::array<float, 0> z { grad::make_shape() };
 
-    std::cout << "BEFORE\n\n" << x << f << g << h;
-
-    f += grad::array<float, 1> (grad::make_shape(10), 2._fC);
-    g *= grad::constant(-1.f);
-    h = g - 2._fC;
-
-    std::cout << "\n\nAFTER\n\n" << x << f << g << h;
+    std::cout << x << y << z << '\n';
+    grad::cuda::linalg<float>::dot(x.data(), y.data(), z.data(), n);
+    std::cout << x << y << z;
 
     std::cin.get();
 }
