@@ -9,6 +9,7 @@ namespace grad::engine
     public:
         using value_type = typename Arg::value_type;
         static constexpr size_t rank = Arg::rank;
+        static constexpr bool is_expr = true;
 
     private:
         Op _op;

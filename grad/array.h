@@ -13,6 +13,7 @@ namespace grad
     public:
         using value_type = T;
         static constexpr size_t rank = N;
+        static constexpr bool is_expr = false;
 
     private:
         cuda::storage<T>* _storage;
@@ -267,23 +268,25 @@ namespace grad
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
         const auto& data = array.data();
+        out << "0x";
         if constexpr(N == 0)
-            return out << data << "\n[" << *data << "]\n";
+            return out << data << "\n[" << *data << "]\n\n";
 
         const auto& shape = array.shape();
-        std::array<size_t, shape.rank> prods;
-        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
+        /*std::array<size_t, shape.rank> prods;
+        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});*/
 
-        out << "0x" << data << '\n';
+        out << data << '\n';
         /*out << std::scientific << std::setprecision(std::numeric_limits<T>::max_digits10) << std::right << std::showpos;*/
         out << shape << '[' << data[0] << ", ";
 
         auto n = shape.length();
         for (size_t i = 1; i < n - 1; i++)
         {
-            for (const auto& p : prods)
+            /*for (const auto& p : prods)
                 out << (i % p == 0 ? "\n" : "");
-            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";
+            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";*/
+            out << data[i] << ", ";
         }
 
         return out << data[n - 1] << "]\n\n";

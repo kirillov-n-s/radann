@@ -1,10 +1,9 @@
 #pragma once
 
 #include "array.h"
+#include "creation.h"
 #include "unary.h"
 #include "binary.h"
-#include "sequence.h"
-#include "random.h"
 #include "linalg.h"
 
 using grad::operator+;

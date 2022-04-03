@@ -1,30 +1,60 @@
 #pragma once
-#include "context.h"
-#include "../meta/meta.h"
+#include "cublas_v2.h"
 
 namespace grad::cuda
 {
-    template<typename T>
-    struct linalg
+    class cublas
     {
-        static void dot(const T*, const T*, T*, size_t);
-        static void norm2(const T*, T*, size_t);
+    private:
+        cublasHandle_t handle;
+        cublas();
 
+    public:
+        cublas(const cublas&) = delete;
+        ~cublas();
+        friend cublasHandle_t get_cublas();
+
+        template<typename T>
+        static void dot(const T*, const T*, T*, size_t);
+        template<typename T>
+        static void nrm2(const T*, T*, size_t);
+
+        template<typename T>
         static void gemv(const T*, const T*, T*, size_t, size_t);
+        template<typename T>
         static void ger(const T*, const T*, T*, size_t, size_t);
 
+        template<typename T>
         static void gemm(const T*, const T*, T*, size_t, size_t, size_t);
-        static void trans(const T*, T*, size_t, size_t);
-        //void inv();
+        template<typename T>
+        static void geam(const T*, T*, size_t, size_t);
     };
 }
 
 namespace grad::cuda
 {
-    template<typename T>
-    void linalg<T>::dot(const T *lhs, const T *rhs, T *res, size_t size)
+    cublas::cublas()
     {
-        auto& handle = global_context().cublas;
+        auto status = cublasCreate(&handle);
+        if (status != CUBLAS_STATUS_SUCCESS)
+            throw std::runtime_error("cuBLAS create failed. cuBLAS error status " + std::to_string(status));
+    }
+
+    cublas::~cublas()
+    {
+        cublasDestroy(handle);
+    }
+
+    cublasHandle_t get_cublas()
+    {
+        static cublas context;
+        return context.handle;
+    }
+
+    template<typename T>
+    void cublas::dot(const T *lhs, const T *rhs, T *res, size_t size)
+    {
+        auto handle = get_cublas();
         cublasStatus_t status;
 
         if constexpr(std::is_same_v<T, float>)
@@ -40,7 +70,7 @@ namespace grad::cuda
                                 rhs, 1,
                                 res);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -48,9 +78,9 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void linalg<T>::norm2(const T *arg, T *res, size_t size)
+    void cublas::nrm2(const T *arg, T *res, size_t size)
     {
-        auto& handle = global_context().cublas;
+        auto handle = get_cublas();
         cublasStatus_t status;
 
         if constexpr(std::is_same_v<T, float>)
@@ -64,7 +94,7 @@ namespace grad::cuda
                                  arg, 1,
                                  res);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -72,9 +102,9 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void linalg<T>::gemv(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
+    void cublas::gemv(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
     {
-        auto& handle = global_context().cublas;
+        auto handle = get_cublas();
         cublasStatus_t status;
         const T alpha = 1.;
         const T beta = 0.;
@@ -98,7 +128,7 @@ namespace grad::cuda
                                  &beta,
                                  res, 1);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -106,9 +136,9 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void linalg<T>::ger(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
+    void cublas::ger(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
     {
-        auto& handle = global_context().cublas;
+        auto handle = get_cublas();
         cublasStatus_t status;
         const T alpha = 1.;
 
@@ -127,7 +157,7 @@ namespace grad::cuda
                                 rhs, 1,
                                 res, rows);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -135,9 +165,9 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void linalg<T>::gemm(const T *lhs, const T *rhs, T *res, size_t rows, size_t mid, size_t cols)
+    void cublas::gemm(const T *lhs, const T *rhs, T *res, size_t rows, size_t mid, size_t cols)
     {
-        auto& handle = global_context().cublas;
+        auto handle = get_cublas();
         cublasStatus_t status;
         const T alpha = 1.;
         const T beta = 0.;
@@ -161,7 +191,7 @@ namespace grad::cuda
                                  &beta,
                                  res, rows);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -169,9 +199,9 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void linalg<T>::trans(const T *arg, T *res, size_t rows, size_t cols)
+    void cublas::geam(const T *arg, T *res, size_t rows, size_t cols)
     {
-        auto& handle = global_context().cublas;
+        auto handle = get_cublas();
         cublasStatus_t status;
         const T alpha = 1.;
         const T beta = 0.;
@@ -195,7 +225,7 @@ namespace grad::cuda
                                  nullptr, cols,
                                  res, cols);
         else
-            static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)

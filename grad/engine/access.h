@@ -10,6 +10,7 @@ namespace grad::engine
     public:
         using value_type = T;
         static constexpr size_t rank = N;
+        static constexpr bool is_expr = true;
 
     private:
         const T* _data;
@@ -51,9 +52,9 @@ namespace grad::engine
     template<typename Expr>
     inline auto get_access(const Expr &expr)
     {
-        if constexpr (meta::has_subscript<Expr>::value)
+        if constexpr (Expr::is_expr)
             return expr;
         else
-            return access<typename Expr::value_type, Expr::rank> { expr.data(), expr.size(), expr.shape() };
+            return access { expr.data(), expr.size(), expr.shape() };
     }
 }

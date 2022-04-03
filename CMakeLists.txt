@@ -25,11 +25,14 @@ add_executable(coursework main.cu
         grad/random.h
         grad/cuda/random.h
         grad/grad.h
-        grad/cuda/linalg.h
         grad/meta/meta.h
-        grad/functor/linalg.h grad/linalg.h grad/cuda/context.h)
+        grad/linalg.h
+        grad/cuda/cublas.h
+        grad/cuda/cusolver.h
+        grad/cuda/launch.h
+        grad/creation.h grad/eager_eval.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
 
-target_link_libraries(coursework cuBLAS)
+target_link_libraries(coursework cuBLAS cuSOLVER)

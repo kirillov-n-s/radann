@@ -74,7 +74,7 @@ namespace grad
     template<size_t N>
     size_t shape<N>::operator[](size_t i) const
     {
-        return _data[i];
+        return i < N ? _data[i] : 1;
     }
 
     template<size_t N>

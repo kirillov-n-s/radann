@@ -9,6 +9,7 @@ namespace grad::engine
     public:
         using value_type = typename Seq::value_type;
         static constexpr size_t rank = 0;
+        static constexpr bool is_expr = true;
 
     private:
         Seq _seq;
