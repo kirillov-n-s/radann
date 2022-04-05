@@ -10,6 +10,8 @@ namespace grad
     template <typename T, size_t N>
     class array : public engine::expr<array<T, N>>
     {
+        //static_assert(std::is_floating_point_v<T>, "Array data type must be floating point.");
+
     public:
         using value_type = T;
         static constexpr size_t rank = N;
@@ -22,6 +24,9 @@ namespace grad
         size_t _offset = 0;
 
         array(cuda::storage<T>*, const grad::shape<N>&, size_t);
+
+        template<typename T, size_t N>
+        friend array<T, N> ctor(cuda::storage<T>*, const grad::shape<N>&, size_t);
 
     public:
         array(const grad::shape<N>&);
@@ -58,12 +63,13 @@ namespace grad
         const grad::shape<N>& shape() const;
         size_t shape(size_t) const;
 
+        template<size_t I>
+        array<T, N - I> at(const grad::shape<I>&);
         template <typename... Indices>
         array<T, N - sizeof...(Indices)> operator()(Indices...);
 
         template<size_t M>
         array<T, M> reshape(const grad::shape<M>&);
-
         template<size_t I>
         array<T, N - I> flatten();
 
@@ -87,6 +93,12 @@ namespace grad
     {
         _size = _shape.length();
         _storage->add_ref();
+    }
+
+    template<typename T, size_t N>
+    array<T, N> ctor(cuda::storage<T> *storage, const shape<N> &shape, size_t offset)
+    {
+        return { storage, shape, offset };
     }
 
     template<typename T, size_t N>
@@ -227,13 +239,19 @@ namespace grad
     }
 
     template<typename T, size_t N>
+    template<size_t I>
+    array<T, N - I> array<T, N>::at(const grad::shape <I> &index)
+    {
+        auto extents = _shape.template slice<index.rank>();
+        auto offset = _shape.offset(index);
+        return ctor(_storage, extents, offset);
+    }
+
+    template<typename T, size_t N>
     template<typename... Indices>
     array<T, N - sizeof...(Indices)> array<T, N>::operator()(Indices... indices)
     {
-        auto index = make_shape(indices...);
-        auto extents = _shape.template slice<index.rank>();
-        auto offset = _shape.offset(index);
-        return { _storage, extents, offset };
+        return at(make_shape(indices...));
     }
 
     template<typename T, size_t N>
@@ -242,14 +260,14 @@ namespace grad
     {
         if (_size != shape.length())
             throw std::invalid_argument("Array length mismatch.");
-        return { _storage, shape, _offset };
+        return ctor(_storage, shape, _offset);
     }
 
     template<typename T, size_t N>
     template<size_t I>
     array<T, N - I> array<T, N>::flatten()
     {
-        return { _storage, _shape.template flatten<I>(), _offset };
+        return ctor(_storage, _shape.template flatten<I>(), _offset);
     }
 
     template<typename T, size_t N>

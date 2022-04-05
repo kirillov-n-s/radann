@@ -1,25 +1,20 @@
 #include "grad/grad.h"
 #include <chrono>
-#include <set>
 
 using timer = std::chrono::system_clock;
 
 int main()
 {
-    auto n = 5;
-    auto x = grad::make_array(grad::sin(grad::arithm(0.f, 3.14f / n / n)), n, n);
-
     auto ilist = { 1.f, 3.f, 3.f, 7.f, 2.f, 2.f, 8.f, 6.f, 9.f, 4.f, 2.f, 0.f };
-    grad::array<float, 1> y { grad::make_shape(ilist.size()), ilist };
+    auto x = grad::make_array(grad::make_shape(ilist.size()), ilist);
 
-    std::set<float> set = { 0.f, -4.f, -1.f, 1.f, 2.f, 2.f, -1.f, 3.f, 0.f };
-    grad::array<float, 3> z { grad::make_shape(2, 2, 2), set.rbegin(), set.rend() };
+    auto y = x.reshape(grad::make_shape(3, 4));
+    auto z = grad::make_ones<float>(grad::make_shape(4, 6));
 
-    std::cout << x << y << z;
+    auto m = grad::matmul(y, z);
+    auto d = grad::dot(y, z.reshape(grad::make_shape(3, 4, 2))(1));
 
-    z.assign(ilist.begin(), ilist.begin() + z.size());
-
-    std::cout << z;
+    std::cout << y << z << m << d;
 
     /*const size_t k = 11;
     size_t n[k] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };

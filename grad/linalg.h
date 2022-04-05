@@ -1,5 +1,5 @@
 #pragma once
-#include "eager_eval.h"
+#include "engine/eager_eval.h"
 #include "cuda/cublas.h"
 
 namespace grad
@@ -38,7 +38,7 @@ namespace grad
         auto lhs_eval = eager_eval(lhs);
         auto rhs_eval = eager_eval(rhs);
 
-        auto res = make_array_of_zeroes<Tl>();
+        auto res = make_zeroes<Tl>(grad::make_shape());
         cuda::cublas::dot(lhs_eval.data(), rhs_eval.data(),
                           res.data(),
                           lhs_eval.size());
@@ -49,7 +49,7 @@ namespace grad
     inline auto norm2(const engine::expr<Arg>& arg)
     {
         auto eval = eager_eval(arg);
-        auto res = make_array_of_zeroes<Arg::value_type>();
+        auto res = make_zeroes<Arg::value_type>(grad::make_shape());
         cuda::cublas::nrm2(eval.data(),
                            res.data(),
                            eval.size());
@@ -69,7 +69,7 @@ namespace grad
 
         auto rows = lhs_eval.size();
         auto cols = rhs_eval.size();
-        auto res = make_array_of_zeroes<Tl>(rows, cols);
+        auto res = make_zeroes<Tl>(grad::make_shape(rows, cols));
         cuda::cublas::ger(lhs_eval.data(), rhs_eval.data(),
                           res.data(),
                           rows, cols);
@@ -100,7 +100,7 @@ namespace grad
         auto lhs_eval = eager_eval(lhs);
         auto rhs_eval = eager_eval(rhs);
 
-        auto res = make_array_of_zeroes<Tl>(rows, cols);
+        auto res = make_zeroes<Tl>(make_shape(rows, cols));
         if constexpr(rhs_rank == 1)
             cuda::cublas::gemv(lhs_eval.data(), rhs_eval.data(),
                                 res.data(),
@@ -122,7 +122,7 @@ namespace grad
 
         auto rows = eval.shape(0);
         auto cols = eval.shape(1);
-        auto res = make_array_of_zeroes<Arg::value_type>(cols, rows);
+        auto res = make_zeroes<Arg::value_type>(grad::make_shape(cols, rows));
         cuda::cublas::geam(eval.data(),
                            res.data(),
                            rows, cols);

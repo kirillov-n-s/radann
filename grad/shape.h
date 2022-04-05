@@ -145,6 +145,7 @@ namespace grad
     template <typename... Extents>
     shape<sizeof...(Extents)> make_shape(Extents... extents)
     {
+        static_assert(std::conjunction_v<std::is_integral<Extents>...>, "Extents type must be integral.");
         return { (size_t)extents... };
     }
 

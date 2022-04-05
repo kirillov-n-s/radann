@@ -31,7 +31,7 @@ add_executable(coursework main.cu
         grad/cuda/cusolver.h
         grad/cuda/launch.h
         grad/creation.h
-        grad/eager_eval.h
+        grad/engine/eager_eval.h
         grad/cuda/host_buffer.h)
 
 set_target_properties(coursework PROPERTIES
