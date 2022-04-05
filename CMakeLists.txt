@@ -30,7 +30,9 @@ add_executable(coursework main.cu
         grad/cuda/cublas.h
         grad/cuda/cusolver.h
         grad/cuda/launch.h
-        grad/creation.h grad/eager_eval.h)
+        grad/creation.h
+        grad/eager_eval.h
+        grad/cuda/host_buffer.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

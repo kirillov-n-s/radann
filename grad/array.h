@@ -70,6 +70,8 @@ namespace grad
         const T* data() const;
         T* data();
 
+        cuda::host_buffer<T> host() const;
+
         size_t size() const;
     };
 
@@ -101,10 +103,12 @@ namespace grad
         : _shape(shape)
     {
         _size = _shape.length();
-        if (std::distance(first, last) > _size)
+        auto dist = std::distance(first, last);
+        if (dist > _size)
             throw std::invalid_argument("Iterator range exceeds array shape.");
+        cuda::host_buffer<T> host { first, last };
         _storage = cuda::make_storage<T>(_size);
-        std::copy(first, last, data());
+        _storage->copy_from(host);
     }
 
     template<typename T, size_t N>
@@ -143,9 +147,11 @@ namespace grad
     template<typename InputIterator>
     array<T, N> &array<T, N>::assign(InputIterator first, InputIterator last)
     {
-        if (std::distance(first, last) > _size)
+        auto dist = std::distance(first, last);
+        if (dist > _size)
             throw std::invalid_argument("Iterator range exceeds array shape.");
-        std::copy(first, last, data());
+        cuda::host_buffer<T> host { first, last };
+        _storage->copy_from(host, _offset);
         return *this;
     }
 
@@ -235,7 +241,7 @@ namespace grad
     array<T, M> array<T, N>::reshape(const grad::shape<M> &shape)
     {
         if (_size != shape.length())
-            throw std::invalid_argument("Array shape overall length mismatch.");
+            throw std::invalid_argument("Array length mismatch.");
         return { _storage, shape, _offset };
     }
 
@@ -259,6 +265,12 @@ namespace grad
     }
 
     template<typename T, size_t N>
+    cuda::host_buffer<T> array<T, N>::host() const
+    {
+        return _storage->host(_size, _offset);
+    }
+
+    template<typename T, size_t N>
     size_t array<T, N>::size() const
     {
         return _size;
@@ -267,26 +279,30 @@ namespace grad
     template<typename T, size_t N>
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
-        const auto& data = array.data();
+        const auto host = array.host();
+        auto data = host.data();
         out << "0x";
         if constexpr(N == 0)
-            return out << data << "\n[" << *data << "]\n\n";
+            return out << data << "\n[" << data[0] << "]\n\n";
 
         const auto& shape = array.shape();
-        /*std::array<size_t, shape.rank> prods;
-        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});*/
+        std::array<size_t, shape.rank> prods;
+        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
         out << data << '\n';
-        /*out << std::scientific << std::setprecision(std::numeric_limits<T>::max_digits10) << std::right << std::showpos;*/
+        /*out
+            << std::scientific
+            << std::setprecision(std::numeric_limits<T>::max_digits10)
+            << std::right
+            << std::showpos;*/
         out << shape << '[' << data[0] << ", ";
 
         auto n = shape.length();
         for (size_t i = 1; i < n - 1; i++)
         {
-            /*for (const auto& p : prods)
+            for (const auto& p : prods)
                 out << (i % p == 0 ? "\n" : "");
-            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";*/
-            out << data[i] << ", ";
+            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";
         }
 
         return out << data[n - 1] << "]\n\n";

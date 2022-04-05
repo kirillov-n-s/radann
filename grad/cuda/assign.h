@@ -16,11 +16,6 @@ namespace grad::cuda
     {
         int block_dim, grid_dim;
         get_launch_parameters(kernel::assign<T, Expr>, size, block_dim, grid_dim);
-
-        int device;
-        cudaGetDevice(&device);
-        cudaMemPrefetchAsync(data, size, device);
-
         kernel::assign<<<grid_dim, block_dim>>>(data, size, expr);
         auto status = cudaDeviceSynchronize();
         if (status != cudaSuccess)
