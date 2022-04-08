@@ -16,8 +16,8 @@ namespace grad::cuda
 
         template<typename T>
         static void dot(const T*, const T*, T*, size_t);
-        template<typename T>
-        static void nrm2(const T*, T*, size_t);
+        /*template<typename T>
+        static void nrm2(const T*, T*, size_t);*/
 
         template<typename T>
         static void gemv(const T*, const T*, T*, size_t, size_t);
@@ -77,7 +77,7 @@ namespace grad::cuda
             throw std::runtime_error("cuBLAS dot failed. cuBLAS error status " + std::to_string(status));
     }
 
-    template<typename T>
+    /*template<typename T>
     void cublas::nrm2(const T *arg, T *res, size_t size)
     {
         auto handle = get_cublas();
@@ -99,7 +99,7 @@ namespace grad::cuda
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
             throw std::runtime_error("cuBLAS nrm2 failed. cuBLAS error status " + std::to_string(status));
-    }
+    }*/
 
     template<typename T>
     void cublas::gemv(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)

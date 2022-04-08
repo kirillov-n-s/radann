@@ -22,6 +22,7 @@ namespace grad::engine
         value_type operator[](size_t) const;
 
         auto shape() const;
+        auto shape(size_t) const;
 
         template<typename Op, typename Arg>
         friend inline auto make_unary(const Op&, const expr<Arg>&);
@@ -45,6 +46,12 @@ namespace grad::engine
     auto unary<Op, Arg>::shape() const
     {
         return _arg.shape();
+    }
+
+    template<typename Op, typename Arg>
+    auto unary<Op, Arg>::shape(size_t i) const
+    {
+        return _arg.shape(i);
     }
 
     template<typename Op, typename Arg>

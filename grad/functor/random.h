@@ -16,7 +16,7 @@ namespace grad::functor
         uniform(unsigned int seed)
             : _seed(seed) {};
 
-        __host__ __device__ inline T operator()(size_t i) const
+        __device__ inline T operator()(size_t i) const
         {
             return cuda::random<T>{ _seed, i }.uniform();
         }
@@ -35,7 +35,7 @@ namespace grad::functor
         normal(unsigned int seed)
             : _seed(seed) {};
 
-        __host__ __device__ inline T operator()(size_t i) const
+        __device__ inline T operator()(size_t i) const
         {
             return cuda::random<T>{ _seed, i }.normal();
         }

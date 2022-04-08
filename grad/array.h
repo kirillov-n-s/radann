@@ -242,7 +242,7 @@ namespace grad
     template<size_t I>
     array<T, N - I> array<T, N>::at(const grad::shape <I> &index)
     {
-        auto extents = _shape.template slice<index.rank>();
+        auto extents = _shape.template cut<index.rank>();
         auto offset = _shape.offset(index);
         return ctor(_storage, extents, offset);
     }

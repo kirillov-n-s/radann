@@ -39,7 +39,10 @@ namespace grad
         size_t offset(const shape<I>&);
 
         template <size_t I>
-        shape<N - I> slice();
+        size_t stride();
+
+        template <size_t I>
+        shape<N - I> cut();
 
         template <size_t I>
         shape<N - I> flatten();
@@ -74,7 +77,7 @@ namespace grad
     template<size_t N>
     size_t shape<N>::operator[](size_t i) const
     {
-        return i < N ? _data[i] : 1;
+        return _data[i];
     }
 
     template<size_t N>
@@ -112,8 +115,7 @@ namespace grad
     size_t shape<N>::offset(const shape<I> &index)
     {
         static_assert(N >= I, "Index rank exceeds shape rank.");
-        auto diff = N - I;
-        auto acc = std::accumulate(_data.begin(), _data.begin() + diff, (size_t)1, std::multiplies<size_t>{});
+        auto acc = std::accumulate(_data.begin(), _data.begin() + N - I, (size_t)1, std::multiplies<size_t>{});
         size_t res = 0;
         for (size_t i = 0; i < I; i++)
         {
@@ -123,10 +125,19 @@ namespace grad
         return res;
     }
 
+    template<size_t N>
+    template<size_t I>
+    size_t shape<N>::stride()
+    {
+        static_assert(N > I, "Stride dimension exceeds shape rank.");
+        return std::accumulate(_data.begin(), _data.begin() + I, (size_t)1, std::multiplies<size_t>{});
+    }
+
     template <size_t N>
     template <size_t I>
-    shape<N - I> shape<N>::slice()
+    shape<N - I> shape<N>::cut()
     {
+        static_assert(N > I, "Cut results in negative rank.");
         return { _data.begin(), _data.end() - I };
     }
 

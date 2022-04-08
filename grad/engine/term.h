@@ -21,6 +21,7 @@ namespace grad::engine
         value_type operator[](size_t) const;
 
         auto shape() const;
+        auto shape(size_t) const;
 
         template<typename Seq>
         friend inline auto make_term(const Seq&);
@@ -47,8 +48,16 @@ namespace grad::engine
     }
 
     template<typename Seq>
+    auto term<Seq>::shape(size_t i) const
+    {
+        return make_shape()[i];
+    }
+
+    template<typename Seq>
     inline auto make_term(const Seq &seq)
     {
         return term { seq };
     }
+
+
 }

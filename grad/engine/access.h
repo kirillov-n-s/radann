@@ -24,6 +24,7 @@ namespace grad::engine
         T operator[](size_t i) const;
 
         auto shape() const;
+        auto shape(size_t) const;
 
         template<typename Expr>
         friend inline auto get_access(const Expr&);
@@ -47,6 +48,12 @@ namespace grad::engine
     auto access<T, N>::shape() const
     {
         return _shape;
+    }
+
+    template<typename T, size_t N>
+    auto access<T, N>::shape(size_t i) const
+    {
+        return _shape[i];
     }
 
     template<typename Expr>

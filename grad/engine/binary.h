@@ -23,6 +23,7 @@ namespace grad::engine
         value_type operator[](size_t) const;
 
         auto shape() const;
+        auto shape(size_t) const;
 
         template<typename Op, typename Lhs, typename Rhs>
         friend inline auto make_binary(const Op&, const expr<Lhs>&, const expr<Rhs>&);
@@ -49,6 +50,15 @@ namespace grad::engine
             return _lhs.shape();
         else
             return _rhs.shape();
+    }
+
+    template<typename Op, typename Lhs, typename Rhs>
+    auto binary<Op, Lhs, Rhs>::shape(size_t i) const
+    {
+        if constexpr(Lhs::rank > Rhs::rank)
+            return _lhs.shape(i);
+        else
+            return _rhs.shape(i);
     }
 
     template<typename Op, typename Lhs, typename Rhs>
