@@ -14,8 +14,8 @@ namespace grad::cuda
     template<typename T, typename Expr>
     void assign(T *data, size_t size, const Expr &expr)
     {
-        int block_dim, grid_dim;
-        get_launch_parameters(kernel::assign<T, Expr>, size, block_dim, grid_dim);
+        size_t block_dim, grid_dim;
+        get_launch_config(kernel::assign<T, Expr>, size, 0, block_dim, grid_dim);
         kernel::assign<<<grid_dim, block_dim>>>(data, size, expr);
         auto status = cudaDeviceSynchronize();
         if (status != cudaSuccess)

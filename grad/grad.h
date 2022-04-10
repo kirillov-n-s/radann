@@ -5,6 +5,7 @@
 #include "unary.h"
 #include "binary.h"
 #include "linalg.h"
+#include "reduce.h"
 
 using grad::operator+;
 using grad::operator-;

@@ -5,23 +5,31 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
-    /*auto ilist = { 1.f, 3.f, 3.f, 7.f, 2.f, 2.f, 8.f, 6.f, 9.f, 4.f, 2.f, 0.f, 1.f, 4.f, 8.f, 8.f };
+    const size_t k10 = 8;
+    size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 
-    auto x = grad::make_array(grad::make_shape(ilist.size()), ilist);
-    auto y = x.reshape(grad::make_shape(4, 4));
-    auto w = y.reshape(grad::make_shape(4, 2, 2));
-    auto u = w.reshape(grad::make_shape(2, 2, 2, 2));
-    auto v = u.reshape(grad::make_shape(1, 16));
+    const size_t k2 = 9;
+    size_t n2[k2] = { 8, 64, 512, 4096, 32768, 262144, 2097152, 16777216, 134217728 };
 
-    std::cout << x << y << w << u << v;*/
+    const size_t k_ = 10;
+    size_t n_[k_] = { 32, 100, 128, 1000, 3000, 4096, 8192, 10000, 32768, 66000 };
 
-    const size_t k = 11;
-    size_t n[k] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
+    const auto k = k10;
+    const auto n = n10;
 
-    //uint64_t time_alloc[k] = { 0 };
-    uint64_t time_pure[k]  = { 0 };
+    for (int i = 0; i < k; i++)
+    {
+        auto m = n[i];
+        auto x = grad::make_arithm(grad::make_shape(m), 0.f, 1.f);
+        auto f = grad::pow(2._fC, grad::log(x));
 
-    size_t s = 0;
+        auto r = grad::make_zeroes<float>(grad::make_shape());
+        grad::cuda::reduce(x.data(), r.data(), x.size(), grad::functor::add{});
+
+        std::cout << "\tsize = " << x.size() << '\n' << r;
+    }
+
+    /*uint64_t time[k]  = { 0 };
 
     size_t tests = 1000;
 
@@ -30,32 +38,22 @@ int main()
         for (int i = 0; i < k; i++)
         {
             auto m = n[i];
-            auto x = grad::make_arithm(grad::make_shape(m, m), 0.f, 1.f);
+            auto x = grad::make_arithm(grad::make_shape(m), 0.f, 1.f);
+            auto f = grad::pow(2._fC, grad::log(x));
 
-            //auto then_alloc = timer::now();
-            auto a = 3._fC / grad::asin(x);
-            auto b = grad::pow(2._fC, grad::log(x));
-
-            auto then_pure = timer::now();
-            auto c = grad::matmul(a, b);
-
-            s += c.size();
-
-            auto now = timer::now();
-            //time_alloc[i] += std::chrono::duration_cast<std::chrono::microseconds>(now - then_alloc).count();
-            time_pure[i]  += std::chrono::duration_cast<std::chrono::microseconds>(now - then_pure).count();
+            auto then = timer::now();
+            auto r = grad::make_zeroes<float>(grad::make_shape());
+            auto y = grad::make_array(f);
+            grad::cuda::reduce(y.data(), x.data(), x.size(), grad::functor::add{});
+            time[i]  += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
         }
+    auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
 
     std::cout << "tests = " << tests << ", k = " << k << "\n\n"
-              << "full tests time = "
-              << std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count()
-              << " s\n\n";
+              << "full tests time = " << global_time << " s\n\n";
     for (int i = 0; i < k; i++)
         std::cout << "n = " << n[i] << '\n'
-                  //<< "\tavg time with alloc  = " << time_alloc[i] / tests << " us\n"
-                  << "\tavg time matmul = " << time_pure[i]  / tests << " us\n";
-
-    std::cout << "\n" << s;
+                  << "\tavg time reduce (sum) = " << time[i]  / tests << " us\n";*/
 
     std::cin.get();
 }

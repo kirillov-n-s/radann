@@ -299,6 +299,11 @@ namespace grad
     {
         const auto host = array.host();
         auto data = host.data();
+        /*out
+            << std::scientific
+            << std::setprecision(std::numeric_limits<T>::max_digits10)
+            << std::right
+            << std::showpos;*/
         out << "0x";
         if constexpr(N == 0)
             return out << data << "\n[" << data[0] << "]\n\n";
@@ -308,11 +313,6 @@ namespace grad
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
         out << data << '\n';
-        /*out
-            << std::scientific
-            << std::setprecision(std::numeric_limits<T>::max_digits10)
-            << std::right
-            << std::showpos;*/
         out << shape << '[' << data[0] << ", ";
 
         auto n = shape.length();

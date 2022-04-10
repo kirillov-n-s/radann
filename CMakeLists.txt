@@ -25,7 +25,6 @@ add_executable(coursework main.cu
         grad/random.h
         grad/cuda/random.h
         grad/grad.h
-        grad/meta/meta.h
         grad/linalg.h
         grad/cuda/cublas.h
         grad/cuda/cusolver.h
@@ -34,7 +33,12 @@ add_executable(coursework main.cu
         grad/engine/eval.h
         grad/cuda/host_buffer.h
         grad/engine/map.h
-        grad/functor/linalg.h)
+        grad/functor/linalg.h
+        grad/cuda/kernel/reduce.h
+        grad/cuda/reduce.h
+        grad/engine/reduce.h
+        grad/reduce.h
+        grad/cuda/kernel/shared.h grad/cuda/device_buffer.h grad/functor/identity.h grad/util/util.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

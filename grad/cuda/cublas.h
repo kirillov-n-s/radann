@@ -1,5 +1,6 @@
 #pragma once
 #include "cublas_v2.h"
+#include "../util/util.h"
 
 namespace grad::cuda
 {
@@ -16,8 +17,8 @@ namespace grad::cuda
 
         template<typename T>
         static void dot(const T*, const T*, T*, size_t);
-        /*template<typename T>
-        static void nrm2(const T*, T*, size_t);*/
+        template<typename T>
+        static void nrm2(const T*, T*, size_t);
 
         template<typename T>
         static void gemv(const T*, const T*, T*, size_t, size_t);
@@ -70,14 +71,14 @@ namespace grad::cuda
                                 rhs, 1,
                                 res);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
             throw std::runtime_error("cuBLAS dot failed. cuBLAS error status " + std::to_string(status));
     }
 
-    /*template<typename T>
+    template<typename T>
     void cublas::nrm2(const T *arg, T *res, size_t size)
     {
         auto handle = get_cublas();
@@ -94,12 +95,12 @@ namespace grad::cuda
                                  arg, 1,
                                  res);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
             throw std::runtime_error("cuBLAS nrm2 failed. cuBLAS error status " + std::to_string(status));
-    }*/
+    }
 
     template<typename T>
     void cublas::gemv(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
@@ -128,7 +129,7 @@ namespace grad::cuda
                                  &beta,
                                  res, 1);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -157,7 +158,7 @@ namespace grad::cuda
                                 rhs, 1,
                                 res, rows);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -191,7 +192,7 @@ namespace grad::cuda
                                  &beta,
                                  res, rows);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -225,7 +226,7 @@ namespace grad::cuda
                                  nullptr, cols,
                                  res, cols);
         else
-                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(util::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)

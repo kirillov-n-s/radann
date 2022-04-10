@@ -106,25 +106,25 @@ namespace grad::cuda
     template<typename T>
     typename host_buffer<T>::iterator host_buffer<T>::begin()
     {
-        return _data[0];
+        return _data.get();
     }
 
     template<typename T>
     typename host_buffer<T>::const_iterator host_buffer<T>::begin() const
     {
-        return _data[0];
+        return _data.get();
     }
 
     template<typename T>
     typename host_buffer<T>::iterator host_buffer<T>::end()
     {
-        return _data[_size];
+        return _data.get() + _size;
     }
 
     template<typename T>
     typename host_buffer<T>::const_iterator host_buffer<T>::end() const
     {
-        return _data[_size];
+        return _data.get() + _size;
     }
 
     template<typename T>

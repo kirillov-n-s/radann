@@ -1,6 +1,5 @@
 #pragma once
 #include "expr.h"
-#include "../meta/meta.h"
 
 namespace grad::engine
 {
