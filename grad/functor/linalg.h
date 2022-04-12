@@ -1,6 +1,6 @@
 #pragma once
 #include "../cuda/cublas.h"
-#include "../creation.h"
+#include "../core/array.h"
 
 namespace grad::functor
 {
@@ -18,7 +18,7 @@ namespace grad::functor
         template <typename T, size_t N>
         inline auto operator()(const array<T, N> &x, const array<T, N> &y) const
         {
-            auto res = make_zeroes<T>(grad::make_shape());
+            auto res = make_array<T>(grad::make_shape());
             cuda::cublas::dot(x.data(), y.data(),
                               res.data(),
                               x.size());
@@ -35,7 +35,7 @@ namespace grad::functor
         {
             auto rows = x.size();
             auto cols = y.size();
-            auto res = make_zeroes<T>(grad::make_shape(rows, cols));
+            auto res = make_array<T>(grad::make_shape(rows, cols));
             cuda::cublas::ger(x.data(), y.data(),
                               res.data(),
                               rows, cols);
@@ -58,7 +58,7 @@ namespace grad::functor
         inline auto operator()(const array<T, 2> &x, const array<T, 1> &y) const
         {
             auto rows = x.shape(0);
-            auto res = make_zeroes<T>(make_shape(rows));
+            auto res = make_array<T>(make_shape(rows));
             cuda::cublas::gemv(x.data(), y.data(),
                                res.data(),
                                rows, x.shape(1));
@@ -70,7 +70,7 @@ namespace grad::functor
         {
             auto rows = x.shape(0);
             auto cols = y.shape(1);
-            auto res = make_zeroes<T>(make_shape(rows, cols));
+            auto res = make_array<T>(make_shape(rows, cols));
             cuda::cublas::gemm(x.data(), y.data(),
                                res.data(),
                                rows, x.shape(1), cols);
@@ -87,7 +87,7 @@ namespace grad::functor
         {
             auto rows = x.shape(0);
             auto cols = x.shape(1);
-            auto res = make_zeroes<T>(grad::make_shape(cols, rows));
+            auto res = make_array<T>(grad::make_shape(cols, rows));
             cuda::cublas::geam(x.data(),
                                res.data(),
                                rows, cols);

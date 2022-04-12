@@ -1,5 +1,5 @@
 #pragma once
-#include "cublas_v2.h"
+#include <cublas_v2.h>
 #include "../util/util.h"
 
 namespace grad::cuda
@@ -57,6 +57,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
 
         if constexpr(std::is_same_v<T, float>)
             status = cublasSdot(handle,
@@ -83,6 +84,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
 
         if constexpr(std::is_same_v<T, float>)
             status = cublasSnrm2(handle,
@@ -107,6 +109,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST);
         const T alpha = 1.;
         const T beta = 0.;
 
@@ -141,6 +144,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST);
         const T alpha = 1.;
 
         if constexpr(std::is_same_v<T, float>)
@@ -170,6 +174,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST);
         const T alpha = 1.;
         const T beta = 0.;
 
@@ -204,6 +209,7 @@ namespace grad::cuda
     {
         auto handle = get_cublas();
         cublasStatus_t status;
+        cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST);
         const T alpha = 1.;
         const T beta = 0.;
 

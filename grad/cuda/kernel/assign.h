@@ -1,5 +1,5 @@
 #pragma once
-#include "device_launch_parameters.h"
+#include <device_launch_parameters.h>
 
 namespace grad::cuda::kernel
 {

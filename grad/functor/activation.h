@@ -2,12 +2,12 @@
 
 namespace grad::functor
 {
-    struct sgn
+    struct sigmoid
     {
         template <typename T>
         __host__ __device__ inline T operator()(T x) const
         {
-            return x / ::fabs(x);
+            return 1 / (1 + ::exp(-x));
         }
     };
 }

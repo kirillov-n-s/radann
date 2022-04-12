@@ -1,0 +1,27 @@
+#pragma once
+#include "engine/unary_eltwise.h"
+#include "functor/extension.h"
+
+namespace grad
+{
+    template <typename Arg>
+    inline auto sign(const engine::expr<Arg>&);
+
+    template <typename Arg>
+    inline auto pow2(const engine::expr<Arg>&);
+}
+
+namespace grad
+{
+    template <typename Arg>
+    inline auto sign(const engine::expr<Arg> &arg)
+    {
+        return engine::make_eltwise(functor::sgn{}, arg);
+    }
+
+    template <typename Arg>
+    inline auto pow2(const engine::expr<Arg> &arg)
+    {
+        return engine::make_eltwise(functor::pow2{}, arg);
+    }
+}

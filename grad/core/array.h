@@ -1,9 +1,9 @@
 #pragma once
 #include <iomanip>
 #include "shape.h"
-#include "cuda/storage.h"
-#include "cuda/assign.h"
-#include "engine/access.h"
+#include "../cuda/storage.h"
+#include "../cuda/assign.h"
+#include "../engine/access.h"
 
 namespace grad
 {
@@ -49,6 +49,7 @@ namespace grad
 
         template<typename Expr>
         array& operator=(const engine::expr<Expr>&);
+        array& operator=(const array&);
         template<typename Expr>
         array& operator+=(const engine::expr<Expr>&);
         template<typename Expr>
@@ -64,14 +65,14 @@ namespace grad
         size_t shape(size_t) const;
 
         template<size_t I>
-        array<T, N - I> at(const grad::shape<I>&);
+        array<T, N - I> at(const grad::shape<I>&) const;
         template <typename... Indices>
-        array<T, N - sizeof...(Indices)> operator()(Indices...);
+        array<T, N - sizeof...(Indices)> operator()(Indices...) const;
 
         template<size_t M>
-        array<T, M> reshape(const grad::shape<M>&);
+        array<T, M> reshape(const grad::shape<M>&) const;
         template<size_t I>
-        array<T, N - I> flatten();
+        array<T, N - I> flatten() const;
 
         const T* data() const;
         T* data();
@@ -80,6 +81,22 @@ namespace grad
 
         size_t size() const;
     };
+
+    template<typename T, size_t N>
+    inline auto make_array(const grad::shape<N>&);
+
+    template<typename InputIterator, size_t N>
+    inline auto make_array(const grad::shape<N>&, InputIterator, InputIterator);
+    template<typename T, size_t N>
+    inline auto make_array(const grad::shape<N>&, const std::initializer_list<T>&);
+
+    template <typename Expr, size_t N>
+    inline auto make_array(const shape<N>&, const engine::expr<Expr>&);
+    template <typename Expr>
+    inline auto make_array(const engine::expr<Expr>&);
+
+    template <typename T, size_t N>
+    inline auto make_copy(const array<T, N>&);
 
     template<typename T, size_t N>
     std::ostream& operator<<(std::ostream&, const array<T, N>&);
@@ -182,6 +199,14 @@ namespace grad
     }
 
     template<typename T, size_t N>
+    array<T, N> &array<T, N>::operator=(const array &other)
+    {
+        if (this == &other)
+            return *this;
+        return *this = engine::get_access(other);
+    }
+
+    template<typename T, size_t N>
     template<typename Expr>
     array<T, N> &array<T, N>::operator+=(const engine::expr<Expr> &expr)
     {
@@ -240,7 +265,7 @@ namespace grad
 
     template<typename T, size_t N>
     template<size_t I>
-    array<T, N - I> array<T, N>::at(const grad::shape <I> &index)
+    array<T, N - I> array<T, N>::at(const grad::shape<I> &index) const
     {
         auto extents = _shape.template cut<index.rank>();
         auto offset = _shape.offset(index);
@@ -249,14 +274,14 @@ namespace grad
 
     template<typename T, size_t N>
     template<typename... Indices>
-    array<T, N - sizeof...(Indices)> array<T, N>::operator()(Indices... indices)
+    array<T, N - sizeof...(Indices)> array<T, N>::operator()(Indices... indices) const
     {
         return at(make_shape(indices...));
     }
 
     template<typename T, size_t N>
     template<size_t M>
-    array<T, M> array<T, N>::reshape(const grad::shape<M> &shape)
+    array<T, M> array<T, N>::reshape(const grad::shape<M> &shape) const
     {
         if (_size != shape.length())
             throw std::invalid_argument("Array length mismatch.");
@@ -265,7 +290,7 @@ namespace grad
 
     template<typename T, size_t N>
     template<size_t I>
-    array<T, N - I> array<T, N>::flatten()
+    array<T, N - I> array<T, N>::flatten() const
     {
         return ctor(_storage, _shape.template flatten<I>(), _offset);
     }
@@ -294,6 +319,43 @@ namespace grad
         return _size;
     }
 
+    template <typename T, size_t N>
+    inline auto make_array(const shape<N>& shape)
+    {
+        return array<T, shape.rank> { shape };
+    }
+
+    template<typename InputIterator, size_t N>
+    inline auto make_array(const grad::shape<N>& shape, InputIterator first, InputIterator last)
+    {
+        return array<typename std::iterator_traits<InputIterator>::value_type, N> { shape, first, last };
+    }
+
+    template<typename T, size_t N>
+    inline auto make_array(const grad::shape<N>& shape, const std::initializer_list<T>& data)
+    {
+        return array<T, N> { shape, data };
+    }
+
+    template <typename Expr, size_t N>
+    inline auto make_array(const shape<N>& shape, const engine::expr<Expr>& expr)
+    {
+        return array<typename Expr::value_type, shape.rank> { shape, expr };
+    }
+
+    template <typename Expr>
+    inline auto make_array(const engine::expr<Expr>& expr)
+    {
+        auto shape = expr.self().shape();
+        return array<typename Expr::value_type, shape.rank> { shape, expr };
+    }
+
+    template <typename T, size_t N>
+    inline auto make_copy(const array<T, N>& other)
+    {
+        return array<T, N> { other.shape(), other };
+    }
+
     template<typename T, size_t N>
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
@@ -313,9 +375,14 @@ namespace grad
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
         out << data << '\n';
-        out << shape << '[' << data[0] << ", ";
+        out << shape << '[' << data[0];
 
         auto n = shape.length();
+        if (n > 1)
+            out << ", ";
+        else
+            return out << "]\n\n";
+
         for (size_t i = 1; i < n - 1; i++)
         {
             for (const auto& p : prods)

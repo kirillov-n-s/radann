@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/binary.h"
+#include "engine/binary_eltwise.h"
 #include "functor/binary.h"
 
 namespace grad
@@ -34,48 +34,48 @@ namespace grad
     template <typename Lhs, typename Rhs>
     inline auto operator+(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::add{}, lhs, rhs);
+        return engine::make_eltwise(functor::add{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator-(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::sub{}, lhs, rhs);
+        return engine::make_eltwise(functor::sub{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator*(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::mul{}, lhs, rhs);
+        return engine::make_eltwise(functor::mul{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator/(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::div{}, lhs, rhs);
+        return engine::make_eltwise(functor::div{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto pow(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::pow{}, lhs, rhs);
+        return engine::make_eltwise(functor::pow{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto atan2(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::atan2{}, lhs, rhs);
+        return engine::make_eltwise(functor::atan2{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto min(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::min{}, lhs, rhs);
+        return engine::make_eltwise(functor::min{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto max(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
     {
-        return engine::make_binary(functor::max{}, lhs, rhs);
+        return engine::make_eltwise(functor::max{}, lhs, rhs);
     }
 }

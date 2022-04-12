@@ -1,5 +1,5 @@
 #pragma once
-#include "curand_kernel.h"
+#include <curand_kernel.h>
 #include "../util/util.h"
 
 namespace grad::cuda

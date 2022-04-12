@@ -137,7 +137,7 @@ namespace grad
     template <size_t I>
     shape<N - I> shape<N>::cut()
     {
-        static_assert(N > I, "Cut results in negative rank.");
+        static_assert(N >= I, "Cut results in negative rank.");
         return { _data.begin(), _data.end() - I };
     }
 

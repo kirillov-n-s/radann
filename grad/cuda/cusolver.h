@@ -1,5 +1,5 @@
 #pragma once
-#include "cusolverDn.h"
+#include <cusolverDn.h>
 
 namespace grad::cuda
 {
@@ -40,7 +40,7 @@ namespace grad::cuda
     }
 
     /*template<typename T>
-    void cusolver::solve(const T *arg, T *res, size_t size)
+    void cusolver::solve(const T *arg, T *result, size_t size)
     {
 
     }*/

@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
+#include <cuda_runtime.h>
 #include "kernel/assign.h"
-#include "launch.h"
 
 namespace grad::cuda
 {
@@ -14,8 +14,15 @@ namespace grad::cuda
     template<typename T, typename Expr>
     void assign(T *data, size_t size, const Expr &expr)
     {
-        size_t block_dim, grid_dim;
-        get_launch_config(kernel::assign<T, Expr>, size, 0, block_dim, grid_dim);
+        int block_dim, grid_dim;
+        cudaOccupancyMaxPotentialBlockSize(
+                &grid_dim,
+                &block_dim,
+                kernel::assign<T, Expr>,
+                0,
+                size);
+        grid_dim = (size - 1) / block_dim + 1;
+
         kernel::assign<<<grid_dim, block_dim>>>(data, size, expr);
         auto status = cudaDeviceSynchronize();
         if (status != cudaSuccess)
