@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/array.h"
+#include "array.h"
 
 namespace grad::engine
 {

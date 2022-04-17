@@ -29,7 +29,7 @@ add_executable(coursework main.cu
         grad/cuda/cublas.h
         grad/cuda/cusolver.h
         grad/creation.h
-        grad/engine/eval.h
+        grad/core/eval.h
         grad/cuda/host_buffer.h
         grad/engine/unary_map.h
         grad/functor/linalg.h

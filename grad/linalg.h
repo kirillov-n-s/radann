@@ -14,6 +14,12 @@ namespace grad
     template <typename Lhs, typename Rhs>
     inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
 
+    template <bool LTrans, typename Lhs, typename Rhs>
+    inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+
+    template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
+    inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+
     template <typename Arg>
     inline auto transpose(const engine::expr<Arg>&);
 
@@ -38,7 +44,19 @@ namespace grad
     template <typename Lhs, typename Rhs>
     inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
     {
-        return engine::make_map(functor::matmul{}, lhs, rhs).result();
+        return engine::make_map(functor::matmul<false, false>{}, lhs, rhs).result();
+    }
+
+    template <bool LTrans, typename Lhs, typename Rhs>
+    inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    {
+        return engine::make_map(functor::matmul<LTrans, false>{}, lhs, rhs).result();
+    }
+
+    template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
+    inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    {
+        return engine::make_map(functor::matmul<LTrans, RTrans>{}, lhs, rhs).result();
     }
 
     template <typename Arg>

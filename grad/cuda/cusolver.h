@@ -14,8 +14,8 @@ namespace grad::cuda
         ~cusolver();
         friend cusolverDnHandle_t get_cusolver();
 
-        /*template<typename T>
-        static void solve(const T*, const T*, T*, size_t);*/
+        /*template<typename trans>
+        static void solve(const trans*, const trans*, trans*, size_t);*/
     };
 }
 
@@ -39,8 +39,8 @@ namespace grad::cuda
         return context.handle;
     }
 
-    /*template<typename T>
-    void cusolver::solve(const T *arg, T *result, size_t size)
+    /*template<typename trans>
+    void cusolver::solve(const trans *arg, trans *result, size_t size)
     {
 
     }*/

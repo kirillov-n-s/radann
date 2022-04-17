@@ -10,7 +10,7 @@ namespace grad
     template <typename T, size_t N>
     class array : public engine::expr<array<T, N>>
     {
-        //static_assert(std::is_floating_point_v<T>, "Array data type must be floating point.");
+        //static_assert(std::is_floating_point_v<trans>, "Array data type must be floating point.");
 
     public:
         using value_type = T;
@@ -94,9 +94,6 @@ namespace grad
     inline auto make_array(const shape<N>&, const engine::expr<Expr>&);
     template <typename Expr>
     inline auto make_array(const engine::expr<Expr>&);
-
-    template <typename T, size_t N>
-    inline auto make_copy(const array<T, N>&);
 
     template<typename T, size_t N>
     std::ostream& operator<<(std::ostream&, const array<T, N>&);
@@ -350,12 +347,6 @@ namespace grad
         return array<typename Expr::value_type, shape.rank> { shape, expr };
     }
 
-    template <typename T, size_t N>
-    inline auto make_copy(const array<T, N>& other)
-    {
-        return array<T, N> { other.shape(), other };
-    }
-
     template<typename T, size_t N>
     std::ostream &operator<<(std::ostream &out, const array<T, N> &array)
     {
@@ -363,7 +354,7 @@ namespace grad
         auto data = host.data();
         /*out
             << std::scientific
-            << std::setprecision(std::numeric_limits<T>::max_digits10)
+            << std::setprecision(std::numeric_limits<trans>::max_digits10)
             << std::right
             << std::showpos;*/
         out << "0x";

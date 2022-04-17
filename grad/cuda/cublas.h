@@ -20,12 +20,12 @@ namespace grad::cuda
         template<typename T>
         static void nrm2(const T*, T*, size_t);
 
-        template<typename T>
+        template<bool Trans, typename T>
         static void gemv(const T*, const T*, T*, size_t, size_t);
         template<typename T>
         static void ger(const T*, const T*, T*, size_t, size_t);
 
-        template<typename T>
+        template<bool LTrans, bool RTrans, typename T>
         static void gemm(const T*, const T*, T*, size_t, size_t, size_t);
         template<typename T>
         static void geam(const T*, T*, size_t, size_t);
@@ -104,7 +104,7 @@ namespace grad::cuda
             throw std::runtime_error("cuBLAS nrm2 failed. cuBLAS error status " + std::to_string(status));
     }
 
-    template<typename T>
+    template<bool Trans, typename T>
     void cublas::gemv(const T *lhs, const T *rhs, T *res, size_t rows, size_t cols)
     {
         auto handle = get_cublas();
@@ -115,7 +115,7 @@ namespace grad::cuda
 
         if constexpr(std::is_same_v<T, float>)
             status = cublasSgemv(handle,
-                                 CUBLAS_OP_N,
+                                 Trans ? CUBLAS_OP_T : CUBLAS_OP_N,
                                  rows, cols,
                                  &alpha,
                                  lhs, rows,
@@ -124,7 +124,7 @@ namespace grad::cuda
                                  res, 1);
         else if constexpr(std::is_same_v<T, double>)
             status = cublasDgemv(handle,
-                                 CUBLAS_OP_N,
+                                 Trans ? CUBLAS_OP_T : CUBLAS_OP_N,
                                  rows, cols,
                                  &alpha,
                                  lhs, rows,
@@ -169,7 +169,7 @@ namespace grad::cuda
             throw std::runtime_error("cuBLAS ger failed. cuBLAS error status " + std::to_string(status));
     }
 
-    template<typename T>
+    template<bool LTrans, bool RTrans, typename T>
     void cublas::gemm(const T *lhs, const T *rhs, T *res, size_t rows, size_t mid, size_t cols)
     {
         auto handle = get_cublas();
@@ -180,20 +180,22 @@ namespace grad::cuda
 
         if constexpr(std::is_same_v<T, float>)
             status = cublasSgemm(handle,
-                                 CUBLAS_OP_N, CUBLAS_OP_N,
+                                 LTrans ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                 RTrans ? CUBLAS_OP_T : CUBLAS_OP_N,
                                  rows, cols, mid,
                                  &alpha,
-                                 lhs, rows,
-                                 rhs, mid,
+                                 lhs, LTrans ? mid : rows,
+                                 rhs, RTrans ? cols : mid,
                                  &beta,
                                  res, rows);
         else if constexpr(std::is_same_v<T, double>)
             status = cublasDgemm(handle,
-                                 CUBLAS_OP_N, CUBLAS_OP_N,
+                                 LTrans ? CUBLAS_OP_T : CUBLAS_OP_N,
+                                 RTrans ? CUBLAS_OP_T : CUBLAS_OP_N,
                                  rows, cols, mid,
                                  &alpha,
-                                 lhs, rows,
-                                 rhs, mid,
+                                 lhs, LTrans ? mid : rows,
+                                 rhs, RTrans ? cols : mid,
                                  &beta,
                                  res, rows);
         else

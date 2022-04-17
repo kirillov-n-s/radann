@@ -5,6 +5,15 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
+    size_t m = 3, n = 4;
+
+    auto a = grad::make_arithm(grad::make_shape(n, m), 0.f, 1.f);
+    auto x = grad::make_arithm(grad::make_shape(n), 0.f, 1.f);
+    auto c = grad::matmul<true>(a, x);
+    auto d = grad::matmul(grad::transpose(a), x);
+
+    std::cout << a << x << c << d;
+
     /*const size_t k10 = 8;
     size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 

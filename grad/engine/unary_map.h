@@ -1,5 +1,5 @@
 #pragma once
-#include "eval.h"
+#include "../core/eval.h"
 
 namespace grad::engine
 {
