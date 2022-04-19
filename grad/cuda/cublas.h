@@ -7,7 +7,7 @@ namespace grad::cuda
     class cublas
     {
     private:
-        cublasHandle_t handle;
+        cublasHandle_t _handle;
         cublas();
 
     public:
@@ -36,20 +36,20 @@ namespace grad::cuda
 {
     cublas::cublas()
     {
-        auto status = cublasCreate(&handle);
+        auto status = cublasCreate(&_handle);
         if (status != CUBLAS_STATUS_SUCCESS)
             throw std::runtime_error("cuBLAS create failed. cuBLAS error status " + std::to_string(status));
     }
 
     cublas::~cublas()
     {
-        cublasDestroy(handle);
+        cublasDestroy(_handle);
     }
 
     cublasHandle_t get_cublas()
     {
         static cublas context;
-        return context.handle;
+        return context._handle;
     }
 
     template<typename T>

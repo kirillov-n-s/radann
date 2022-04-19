@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/unary_map.h"
+#include "engine/unary_eager.h"
 #include "functor/reduce.h"
 #include "extension.h"
 
@@ -35,37 +35,37 @@ namespace grad
     template <typename Arg>
     inline auto sum(const engine::expr<Arg>& arg)
     {
-        return engine::make_map(functor::sum{}, arg).result();
+        return engine::make_eager(functor::sum{}, arg).result();
     }
 
     template <typename Arg>
     inline auto prod(const engine::expr<Arg>& arg)
     {
-        return engine::make_map(functor::prod{}, arg).result();
+        return engine::make_eager(functor::prod{}, arg).result();
     }
 
     template <typename Arg>
     inline auto minval(const engine::expr<Arg>& arg)
     {
-        return engine::make_map(functor::minval{}, arg).result();
+        return engine::make_eager(functor::minval{}, arg).result();
     }
 
     template <typename Arg>
     inline auto maxval(const engine::expr<Arg>& arg)
     {
-        return engine::make_map(functor::maxval{}, arg).result();
+        return engine::make_eager(functor::maxval{}, arg).result();
     }
 
     template <typename Arg>
     inline auto norm2(const engine::expr<Arg>& arg)
     {
-        return engine::make_map(functor::norm2{}, arg).result();
+        return engine::make_eager(functor::norm2{}, arg).result();
     }
 
     template <typename Arg>
     inline auto mean(const engine::expr<Arg>& arg)
     {
-        auto map = engine::make_map(functor::sum{}, arg);
+        auto map = engine::make_eager(functor::sum{}, arg);
         return map.result() /= constant<typename Arg::value_type>(map.arg().size());
     }
 

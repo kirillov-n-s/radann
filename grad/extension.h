@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/unary_eltwise.h"
+#include "engine/unary_lazy.h"
 #include "functor/extension.h"
 
 namespace grad
@@ -16,12 +16,12 @@ namespace grad
     template <typename Arg>
     inline auto sign(const engine::expr<Arg> &arg)
     {
-        return engine::make_eltwise(functor::sgn{}, arg);
+        return engine::make_lazy(functor::sgn{}, arg);
     }
 
     template <typename Arg>
     inline auto pow2(const engine::expr<Arg> &arg)
     {
-        return engine::make_eltwise(functor::pow2{}, arg);
+        return engine::make_lazy(functor::pow2{}, arg);
     }
 }

@@ -10,8 +10,8 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), add{});
@@ -23,8 +23,8 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), mul{});
@@ -36,8 +36,8 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), max{});
@@ -49,8 +49,8 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), min{});
@@ -62,8 +62,8 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::cublas::nrm2(x.data(), res.data(), x.size());

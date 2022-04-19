@@ -6,7 +6,7 @@ namespace grad::cuda
     class cusolver
     {
     private:
-        cusolverDnHandle_t handle;
+        cusolverDnHandle_t _handle;
         cusolver();
 
     public:
@@ -23,20 +23,20 @@ namespace grad::cuda
 {
     cusolver::cusolver()
     {
-        auto status = cusolverDnCreate(&handle);
+        auto status = cusolverDnCreate(&_handle);
         if (status != CUSOLVER_STATUS_SUCCESS)
             throw std::runtime_error("cuSOLVER create failed. cuSOLVER error status " + std::to_string(status));
     }
 
     cusolver::~cusolver()
     {
-        cusolverDnDestroy(handle);
+        cusolverDnDestroy(_handle);
     }
 
     cusolverDnHandle_t get_cusolver()
     {
         static cusolver context;
-        return context.handle;
+        return context._handle;
     }
 
     /*template<typename trans>

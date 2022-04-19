@@ -15,8 +15,8 @@ add_executable(coursework main.cu
         grad/functor/extension.h
         grad/cuda/kernel/assign.h
         grad/cuda/assign.h
-        grad/engine/unary_eltwise.h
-        grad/engine/binary_eltwise.h
+        grad/engine/unary_lazy.h
+        grad/engine/binary_lazy.h
         grad/engine/access.h
         grad/engine/term.h
         grad/functor/sequence.h
@@ -31,16 +31,17 @@ add_executable(coursework main.cu
         grad/creation.h
         grad/core/eval.h
         grad/cuda/host_buffer.h
-        grad/engine/unary_map.h
+        grad/engine/unary_eager.h
         grad/functor/linalg.h
         grad/cuda/reduce.h
         grad/reduce.h
         grad/util/util.h
         grad/functor/reduce.h
-        grad/engine/binary_map.h
+        grad/engine/binary_eager.h
         grad/extension.h
         grad/functor/activation.h
-        grad/activation.h)
+        grad/activation.h
+        grad/core/real.h grad/cuda/prop.h grad/engine/tape.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

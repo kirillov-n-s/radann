@@ -15,8 +15,8 @@ namespace grad::functor
                 throw std::invalid_argument("Shape mismatch in dot product.");
         }
 
-        template <typename T, size_t N>
-        inline auto operator()(const array<T, N> &x, const array<T, N> &y) const
+        template <size_t N, typename T>
+        inline auto operator()(const array<N, T> &x, const array<N, T> &y) const
         {
             auto res = make_array<T>(grad::make_shape());
             cuda::cublas::dot(x.data(), y.data(), res.data(), x.size());
@@ -29,7 +29,7 @@ namespace grad::functor
         static constexpr bool requires_validation = false;
 
         template <typename T>
-        inline auto operator()(const array<T, 1> &x, const array<T, 1> &y) const
+        inline auto operator()(const array<1, T> &x, const array<1, T> &y) const
         {
             auto rows = x.size();
             auto cols = y.size();
@@ -53,7 +53,7 @@ namespace grad::functor
         }
 
         template <typename T>
-        inline auto operator()(const array<T, 2> &x, const array<T, 1> &y) const
+        inline auto operator()(const array<2, T> &x, const array<1, T> &y) const
         {
             auto res = make_array<T>(make_shape(x.shape(LTrans)));
             cuda::cublas::gemv<LTrans>(x.data(), y.data(), res.data(), x.shape(0), x.shape(1));
@@ -61,7 +61,7 @@ namespace grad::functor
         }
 
         template <typename T>
-        inline auto operator()(const array<T, 2> &x, const array<T, 2> &y) const
+        inline auto operator()(const array<2, T> &x, const array<2, T> &y) const
         {
             auto rows = x.shape(LTrans);
             auto cols = y.shape(!RTrans);
@@ -77,7 +77,7 @@ namespace grad::functor
         static constexpr bool requires_validation = false;
 
         template <typename T>
-        inline auto operator()(const array<T, 2> &x) const
+        inline auto operator()(const array<2, T> &x) const
         {
             auto rows = x.shape(0);
             auto cols = x.shape(1);

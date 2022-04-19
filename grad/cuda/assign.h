@@ -2,6 +2,7 @@
 #include <string>
 #include <cuda_runtime.h>
 #include "kernel/assign.h"
+#include "prop.h"
 
 namespace grad::cuda
 {
@@ -21,7 +22,13 @@ namespace grad::cuda
                 kernel::assign<T, Expr>,
                 0,
                 size);
-        grid_dim = (size - 1) / block_dim + 1;
+        int blocks_per_sm;
+        cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+                &blocks_per_sm,
+                kernel::assign<T, Expr>,
+                block_dim,
+                0);
+        grid_dim = std::min<int>((size - 1) / block_dim + 1, blocks_per_sm * get_prop()->multiProcessorCount);
 
         kernel::assign<<<grid_dim, block_dim>>>(data, size, expr);
         auto status = cudaDeviceSynchronize();

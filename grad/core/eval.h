@@ -1,13 +1,13 @@
 #pragma once
 #include "array.h"
 
-namespace grad::engine
+namespace grad
 {
     template <typename Expr>
     inline auto eval(const engine::expr<Expr>&);
 }
 
-namespace grad::engine
+namespace grad
 {
     template <typename Expr>
     inline auto eval(const engine::expr<Expr>& expr)

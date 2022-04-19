@@ -5,14 +5,14 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
-    size_t m = 3, n = 4;
+    const size_t k10 = 8;
+    size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 
-    auto a = grad::make_arithm(grad::make_shape(n, m), 0.f, 1.f);
-    auto x = grad::make_arithm(grad::make_shape(n), 0.f, 1.f);
-    auto c = grad::matmul<true>(a, x);
-    auto d = grad::matmul(grad::transpose(a), x);
+    const size_t k2 = 11;
+    size_t n2[k2] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
 
-    std::cout << a << x << c << d;
+    const auto k = k10;
+    const auto n = n10;
 
     /*const size_t k10 = 8;
     size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
@@ -20,8 +20,8 @@ int main()
     const size_t k2 = 11;
     size_t n2[k2] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
 
-    const auto k = k2;
-    const auto n = n2;
+    const auto k = k10;
+    const auto n = n10;
 
     for (int i = 0; i < k; i++)
     {
@@ -37,20 +37,20 @@ int main()
         std::cout << "\tsize = " << x.size() << '\n' << s << b << a << r << e << v << d;
     }*/
 
-    /*uint64_t time[k] = { 0 };
+    uint64_t time[k] = { 0 };
 
-    size_t tests = 100;
+    size_t tests = 1000;
 
     auto global_then = timer::now();
     for (int t = 0; t < tests; t++)
         for (int i = 0; i < k; i++)
         {
             auto m = n[i];
-            auto x = grad::make_ones<float>(grad::make_shape(m, m));
-            auto y = grad::make_ones<float>(grad::make_shape(m, m));
+            auto x = grad::make_arithm(grad::make_shape(m), 0.f, 1.f);
+            auto y = grad::make_array(grad::sigmoid(x));
 
             auto then = timer::now();
-            auto r = grad::matmul(x, y);
+            auto z = grad::eval(grad::sin(x) / grad::pow2(y) + grad::log(3._fC));
             time[i] += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
         }
     auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
@@ -59,7 +59,7 @@ int main()
               << "full tests time = " << global_time << " s\n\n";
     for (int i = 0; i < k; i++)
         std::cout << "n = " << n[i] << '\n'
-                  << "\tavg time = " << time[i] / tests << " us\n";*/
+                  << "\tavg time = " << time[i] / tests << " us\n";
 
     std::cin.get();
 }
