@@ -10,6 +10,7 @@ namespace grad::engine
         using value_type = typename Arg::value_type;
         static constexpr size_t rank = Arg::rank;
         static constexpr bool is_expr = true;
+        static constexpr bool is_autodiff = Arg::is_autodiff;
 
     private:
         Op _op;

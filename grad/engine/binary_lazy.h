@@ -10,6 +10,7 @@ namespace grad::engine
         using value_type = std::common_type_t<typename Lhs::value_type, typename Rhs::value_type>;
         static constexpr size_t rank = std::max(Lhs::rank, Rhs::rank);
         static constexpr bool is_expr = true;
+        static constexpr bool is_autodiff = Lhs::is_autodiff || Rhs::is_autodiff;
 
     private:
         Op _op;

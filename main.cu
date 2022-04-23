@@ -5,6 +5,20 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
+    auto x = grad::make_arithm(grad::make_shape(3, 4, 2, 3), 1.f, 1.f);
+    auto y = x.reshape(grad::make_shape(8, 9));
+    auto z = x.flatten();
+    auto w = x(1);
+
+    std::cout << x << y << z << w;
+    std::cout << "\n-------------GRADIENTS-------------\n\n\n";
+    std::cout << x.grad() << y.grad() << z.grad() << w.grad();
+
+    std::cin.get();
+}
+
+/*int main()
+{
     const size_t k10 = 8;
     size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
 
@@ -13,29 +27,6 @@ int main()
 
     const auto k = k10;
     const auto n = n10;
-
-    /*const size_t k10 = 8;
-    size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
-
-    const size_t k2 = 11;
-    size_t n2[k2] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
-
-    const auto k = k10;
-    const auto n = n10;
-
-    for (int i = 0; i < k; i++)
-    {
-        auto m = n[i];
-        auto x = grad::make_arithm(grad::make_shape(m), 1.f, 1.f);
-        auto s = grad::sum(x);
-        auto b = grad::minval(x);
-        auto a = grad::maxval(x);
-        auto r = grad::norm2(x);
-        auto e = grad::mean(x);
-        auto v = grad::var(x);
-        auto d = grad::stddev(x);
-        std::cout << "\tsize = " << x.size() << '\n' << s << b << a << r << e << v << d;
-    }*/
 
     uint64_t time[k] = { 0 };
 
@@ -50,7 +41,7 @@ int main()
             auto y = grad::make_array(grad::sigmoid(x));
 
             auto then = timer::now();
-            auto z = grad::eval(grad::sin(x) / grad::pow2(y) + grad::log(3._fC));
+            auto z = grad::eval(grad::sin(x) / grad::pow2(y) + get_grad::log(3._fC));
             time[i] += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
         }
     auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
@@ -62,4 +53,4 @@ int main()
                   << "\tavg time = " << time[i] / tests << " us\n";
 
     std::cin.get();
-}
+}*/

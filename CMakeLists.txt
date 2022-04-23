@@ -6,7 +6,7 @@ set(CMAKE_CUDA_STANDARD 17)
 add_executable(coursework main.cu
         grad/core/shape.h
         grad/core/array.h
-        grad/cuda/storage.h
+        grad/cuda/shared_storage.h
         grad/engine/expr.h
         grad/functor/unary.h
         grad/unary.h
@@ -41,7 +41,11 @@ add_executable(coursework main.cu
         grad/extension.h
         grad/functor/activation.h
         grad/activation.h
-        grad/core/real.h grad/cuda/prop.h grad/engine/tape.h)
+        grad/core/defaults.h
+        grad/cuda/device_prop.h
+        grad/engine/tape.h
+        grad/engine/tape_context.h
+        grad/cuda/shared_array.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

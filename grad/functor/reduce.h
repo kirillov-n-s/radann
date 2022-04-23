@@ -10,10 +10,10 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <size_t N, typename T>
-        inline auto operator()(const array<N, T> &x) const
+        template <size_t N, bool AD, typename T>
+        inline auto operator()(const array<N, AD, T> &x) const
         {
-            auto res = make_array<T>(grad::make_shape());
+            auto res = make_array<AD, T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), add{});
             return res;
         }
@@ -23,10 +23,10 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <size_t N, typename T>
-        inline auto operator()(const array<N, T> &x) const
+        template <size_t N, bool AD, typename T>
+        inline auto operator()(const array<N, AD, T> &x) const
         {
-            auto res = make_array<T>(grad::make_shape());
+            auto res = make_array<AD, T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), mul{});
             return res;
         }
@@ -36,10 +36,10 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <size_t N, typename T>
-        inline auto operator()(const array<N, T> &x) const
+        template <size_t N, bool AD, typename T>
+        inline auto operator()(const array<N, AD, T> &x) const
         {
-            auto res = make_array<T>(grad::make_shape());
+            auto res = make_array<AD, T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), max{});
             return res;
         }
@@ -49,10 +49,10 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <size_t N, typename T>
-        inline auto operator()(const array<N, T> &x) const
+        template <size_t N, bool AD, typename T>
+        inline auto operator()(const array<N, AD, T> &x) const
         {
-            auto res = make_array<T>(grad::make_shape());
+            auto res = make_array<AD, T>(grad::make_shape());
             cuda::reduce(x.data(), res.data(), x.size(), min{});
             return res;
         }
@@ -62,10 +62,10 @@ namespace grad::functor
     {
         static constexpr bool requires_validation = false;
 
-        template <size_t N, typename T>
-        inline auto operator()(const array<N, T> &x) const
+        template <size_t N, bool AD, typename T>
+        inline auto operator()(const array<N, AD, T> &x) const
         {
-            auto res = make_array<T>(grad::make_shape());
+            auto res = make_array<AD, T>(grad::make_shape());
             cuda::cublas::nrm2(x.data(), res.data(), x.size());
             return res;
         }

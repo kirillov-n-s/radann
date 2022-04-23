@@ -2,7 +2,7 @@
 #include <string>
 #include <cuda_runtime.h>
 #include "kernel/assign.h"
-#include "prop.h"
+#include "device_prop.h"
 
 namespace grad::cuda
 {

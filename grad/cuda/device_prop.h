@@ -2,22 +2,22 @@
 
 namespace grad::cuda
 {
-    class prop
+    class device_prop
     {
     private:
         cudaDeviceProp* _handle;
-        prop();
+        device_prop();
 
     public:
-        prop(const prop&) = delete;
-        ~prop();
+        device_prop(const device_prop&) = delete;
+        ~device_prop();
         friend cudaDeviceProp* get_prop();
     };
 }
 
 namespace grad::cuda
 {
-    prop::prop()
+    device_prop::device_prop()
         : _handle(new cudaDeviceProp())
     {
         int device;
@@ -25,14 +25,14 @@ namespace grad::cuda
         cudaGetDeviceProperties(_handle, device);
     }
 
-    prop::~prop()
+    device_prop::~device_prop()
     {
         delete _handle;
     }
 
     cudaDeviceProp* get_prop()
     {
-        static prop context;
+        static device_prop context;
         return context._handle;
     }
 }

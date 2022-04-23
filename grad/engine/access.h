@@ -3,13 +3,14 @@
 
 namespace grad::engine
 {
-    template<typename T, size_t N>
-    class access : public expr<access<T, N>>
+    template<size_t N, bool AD, typename T>
+    class access : public expr<access<N, AD, T>>
     {
     public:
         using value_type = T;
         static constexpr size_t rank = N;
         static constexpr bool is_expr = true;
+        static constexpr bool is_autodiff = AD;
 
     private:
         const T* _data;
@@ -32,25 +33,25 @@ namespace grad::engine
 
 namespace grad::engine
 {
-    template<typename T, size_t N>
-    access<T, N>::access(const T *data, size_t size, const ::grad::shape<N> &shape)
+    template<size_t N, bool AD, typename T>
+    access<N, AD, T>::access(const T *data, size_t size, const ::grad::shape<N> &shape)
         : _data(data), _size(size), _shape(shape) {}
 
-    template<typename T, size_t N>
+    template<size_t N, bool AD, typename T>
     __host__ __device__
-    T access<T, N>::operator[](size_t i) const
+    T access<N, AD, T>::operator[](size_t i) const
     {
         return _data[i % _size];
     }
 
-    template<typename T, size_t N>
-    auto access<T, N>::shape() const
+    template<size_t N, bool AD, typename T>
+    auto access<N, AD, T>::shape() const
     {
         return _shape;
     }
 
-    template<typename T, size_t N>
-    auto access<T, N>::shape(size_t i) const
+    template<size_t N, bool AD, typename T>
+    auto access<N, AD, T>::shape(size_t i) const
     {
         return _shape[i];
     }
@@ -61,6 +62,7 @@ namespace grad::engine
         if constexpr (Expr::is_expr)
             return expr;
         else
-            return access { expr.data(), expr.size(), expr.shape() };
+            return access<Expr::rank, Expr::is_autodiff, typename Expr::value_type>
+                { expr.data(), expr.size(), expr.shape() };
     }
 }

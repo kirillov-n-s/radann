@@ -4,7 +4,7 @@
 namespace grad::cuda
 {
     template <typename T>
-    class storage
+    class shared_storage
     {
     private:
         T* _data;
@@ -12,13 +12,13 @@ namespace grad::cuda
         size_t _nbytes;
         size_t _nrefs = 1;
 
-        storage(size_t);
-        storage(const T*, size_t);
+        shared_storage(size_t);
+        shared_storage(const T*, size_t);
 
-        ~storage();
+        ~shared_storage();
 
     public:
-        storage(const storage&) = delete;
+        shared_storage(const shared_storage&) = delete;
 
         void copy_from(const T*, size_t, size_t = 0);
         void copy_from(const host_buffer<T>&, size_t = 0);
@@ -36,16 +36,16 @@ namespace grad::cuda
         host_buffer<T> host(size_t, size_t = 0) const;
 
         template<typename T>
-        friend storage<T>* make_storage(size_t);
+        friend shared_storage<T>* make_storage(size_t);
         template<typename T>
-        friend storage<T>* make_storage(const T*, size_t);
+        friend shared_storage<T>* make_storage(const T*, size_t);
     };
 }
 
 namespace grad::cuda
 {
     template<typename T>
-    storage<T>::storage(size_t size)
+    shared_storage<T>::shared_storage(size_t size)
         : _size(size), _nbytes(size * sizeof(T))
     {
         auto status = cudaMalloc(&_data, _nbytes);
@@ -55,7 +55,7 @@ namespace grad::cuda
     }
 
     template<typename T>
-    storage<T>::storage(const T *device_ptr, size_t size)
+    shared_storage<T>::shared_storage(const T *device_ptr, size_t size)
         : _size(size), _nbytes(size * sizeof(T))
     {
         auto status = cudaMalloc(&_data, _nbytes);
@@ -66,13 +66,13 @@ namespace grad::cuda
     }
 
     template<typename T>
-    storage<T>::~storage()
+    shared_storage<T>::~shared_storage()
     {
         cudaFree(_data);
     }
 
     template<typename T>
-    void storage<T>::copy_from(const T *device_ptr, size_t size, size_t offset)
+    void shared_storage<T>::copy_from(const T *device_ptr, size_t size, size_t offset)
     {
         auto status = cudaMemcpy(_data + offset, device_ptr, size * sizeof(T),
                                  cudaMemcpyKind::cudaMemcpyDeviceToDevice);
@@ -82,7 +82,7 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void storage<T>::copy_from(const host_buffer<T> &host, size_t offset)
+    void shared_storage<T>::copy_from(const host_buffer<T> &host, size_t offset)
     {
 
         auto status = cudaMemcpy(_data + offset, host.data(), host.nbytes(),
@@ -93,13 +93,13 @@ namespace grad::cuda
     }
 
     template<typename T>
-    void storage<T>::add_ref()
+    void shared_storage<T>::add_ref()
     {
         _nrefs++;
     }
 
     template<typename T>
-    void storage<T>::remove_ref()
+    void shared_storage<T>::remove_ref()
     {
         _nrefs--;
         if (_nrefs == 0)
@@ -107,50 +107,50 @@ namespace grad::cuda
     }
 
     template<typename T>
-    size_t storage<T>::size() const
+    size_t shared_storage<T>::size() const
     {
         return _size;
     }
 
     template<typename T>
-    size_t storage<T>::nbytes() const
+    size_t shared_storage<T>::nbytes() const
     {
         return _nbytes;
     }
 
     template<typename T>
-    size_t storage<T>::nrefs() const
+    size_t shared_storage<T>::nrefs() const
     {
         return _nrefs;
     }
 
     template<typename T>
-    T *storage<T>::data(size_t offset)
+    T *shared_storage<T>::data(size_t offset)
     {
         return _data + offset;
     }
 
     template<typename T>
-    const T *storage<T>::data(size_t offset) const
+    const T *shared_storage<T>::data(size_t offset) const
     {
         return _data + offset;
     }
 
     template<typename T>
-    host_buffer<T> storage<T>::host(size_t size, size_t offset) const
+    host_buffer<T> shared_storage<T>::host(size_t size, size_t offset) const
     {
         return host_buffer<T> { _data + offset, size };
     }
 
     template<typename T>
-    storage<T> *make_storage(size_t size)
+    shared_storage<T> *make_storage(size_t size)
     {
-        return new storage<T> { size };
+        return new shared_storage<T> {size };
     }
 
     template<typename T>
-    storage<T> *make_storage(const T *src, size_t size)
+    shared_storage<T> *make_storage(const T *src, size_t size)
     {
-        return new storage<T> { src, size };
+        return new shared_storage<T> {src, size };
     }
 }

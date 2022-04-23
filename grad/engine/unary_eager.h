@@ -3,7 +3,9 @@
 
 namespace grad::engine
 {
-    template<typename T, size_t NArg, size_t N>
+    template<size_t NArg, size_t N,
+             bool ADArg, bool AD,
+             typename T>
     class unary_eager
     {
     public:
@@ -12,10 +14,10 @@ namespace grad::engine
         static constexpr size_t rank_result = N;
 
     private:
-        array<NArg, T> _arg;
-        array<N, T> _res;
+        array<NArg, ADArg, T> _arg;
+        array<N, AD, T> _res;
 
-        unary_eager(const array<NArg, T>&, const array<N, T>&);
+        unary_eager(const array<NArg, ADArg, T>&, const array<N, AD, T>&);
 
     public:
         auto arg() const;
@@ -28,18 +30,18 @@ namespace grad::engine
 
 namespace grad::engine
 {
-    template<typename T, size_t NArg, size_t N>
-    unary_eager<T, NArg, N>::unary_eager(const array<NArg, T> &arg, const array<N, T> &res)
+    template<size_t NArg, size_t N, bool ADArg, bool AD, typename T>
+    unary_eager<NArg, N, ADArg, AD, T>::unary_eager(const array<NArg, ADArg, T> &arg, const array<N, AD, T> &res)
         : _arg(arg), _res(res) {}
 
-    template<typename T, size_t NArg, size_t N>
-    auto unary_eager<T, NArg, N>::arg() const
+    template<size_t NArg, size_t N, bool ADArg, bool AD, typename T>
+    auto unary_eager<NArg, N, ADArg, AD, T>::arg() const
     {
         return _arg;
     }
 
-    template<typename T, size_t NArg, size_t N>
-    auto unary_eager<T, NArg, N>::result() const
+    template<size_t NArg, size_t N, bool ADArg, bool AD, typename T>
+    auto unary_eager<NArg, N, ADArg, AD, T>::result() const
     {
         return _res;
     }
@@ -50,6 +52,9 @@ namespace grad::engine
         if constexpr(Op::requires_validation)
             op.validate(arg);
         auto arg_eval = eval(arg);
-        return unary_eager {arg_eval, op(arg_eval) };
+        return unary_eager<arg_eval.rank, decltype(op(arg_eval))::rank,
+                           arg_eval.is_autodiff, decltype(op(arg_eval))::is_autodiff,
+                           typename decltype(op(arg_eval))::value_type>
+            {arg_eval, op(arg_eval) };
     }
 }
