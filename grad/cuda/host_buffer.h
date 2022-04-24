@@ -23,7 +23,6 @@ namespace grad::cuda
     private:
         std::unique_ptr<T[]> _data;
         size_t _size;
-        size_t _nbytes;
 
     public:
         template<typename InputIterator>
@@ -51,7 +50,6 @@ namespace grad::cuda
         const_reverse_iterator rend() const;
 
         size_type size() const;
-        size_type nbytes() const;
     };
 }
 
@@ -64,17 +62,16 @@ namespace grad::cuda
         auto dist = std::distance(first, last);
         _data = std::make_unique<T[]>(dist);
         _size = dist;
-        _nbytes = dist * sizeof(T);
         std::copy(first, last, _data.get());
     }
 
     template<typename T>
     host_buffer<T>::host_buffer(const T *device_ptr, size_t size)
-        : _data(std::make_unique<T[]>(size)), _size(size), _nbytes(size * sizeof(T))
+        : _data(std::make_unique<T[]>(size)), _size(size)
     {
-        auto status = cudaMemcpy(_data.get(), device_ptr, _nbytes,
+        cudaMemcpy(_data.get(), device_ptr, _size * sizeof(T),
                                  cudaMemcpyKind::cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
+        auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();
     }
@@ -155,11 +152,5 @@ namespace grad::cuda
     typename host_buffer<T>::size_type host_buffer<T>::size() const
     {
         return _size;
-    }
-
-    template<typename T>
-    typename host_buffer<T>::size_type host_buffer<T>::nbytes() const
-    {
-        return _nbytes;
     }
 }

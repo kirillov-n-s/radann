@@ -23,21 +23,17 @@ namespace grad
         shape<N> _shape;
         size_t _grad_index;
 
-        array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t, size_t);
-        array(cuda::shared_array<T>*, const grad::shape<N>&);
-
-        template<bool AD, size_t N, typename T>
-        friend array<N, AD, T> ctor(cuda::shared_storage<T>*, const grad::shape<N>&, size_t, size_t);
-        template<bool AD, size_t N, typename T>
-        friend array<N, AD, T> ctor(cuda::shared_array<T>*, const grad::shape<N>&);
-
     public:
+        array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t);
+        array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t, size_t);
+
         array(const grad::shape<N>&);
         template<typename InputIterator>
         array(const grad::shape<N>&, InputIterator, InputIterator);
         array(const grad::shape<N>&, const std::initializer_list<T>&);
 
         array(const array&);
+        array(const array<N, false, T>&);
 
         template<typename Expr>
         array(const grad::shape<N>&, const engine::expr<Expr>&);
@@ -80,6 +76,69 @@ namespace grad
         array<N, false, T> grad() const;
     };
 
+    template<size_t N, typename T>
+    class array<N, false, T> :
+            public engine::expr<array<N, false, T>>,
+            public cuda::shared_array<T>
+    {
+    public:
+        using value_type = T;
+        static constexpr size_t rank = N;
+        static constexpr bool is_expr = false;
+        static constexpr bool is_autodiff = false;
+
+    private:
+        shape<N> _shape;
+
+    public:
+        array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t);
+
+        array(const grad::shape<N>&);
+        template<typename InputIterator>
+        array(const grad::shape<N>&, InputIterator, InputIterator);
+        array(const grad::shape<N>&, const std::initializer_list<T>&);
+
+        array(const array&);
+
+        template<typename Expr, typename std::enable_if_t<!Expr::is_autodiff>* = nullptr>
+        array(const grad::shape<N>&, const engine::expr<Expr>&);
+        template<typename Expr, typename std::enable_if_t<!Expr::is_autodiff>* = nullptr>
+        array(const engine::expr<Expr>&);
+
+        ~array() = default;
+
+        template<typename InputIterator>
+        array& assign(InputIterator, InputIterator);
+        array& operator=(const std::initializer_list<T>&);
+
+        template<typename Expr>
+        array& operator=(const engine::expr<Expr>&);
+        array& operator=(const array&);
+        template<typename Expr>
+        array& operator+=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator-=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator*=(const engine::expr<Expr>&);
+        template<typename Expr>
+        array& operator/=(const engine::expr<Expr>&);
+
+        array& operator>>=(const array&);
+
+        const grad::shape<N>& shape() const;
+        size_t shape(size_t) const;
+
+        template<size_t I>
+        array<N - I, false, T> at(const grad::shape<I>&) const;
+        template <typename... Indices>
+        array<N - sizeof...(Indices), false, T> operator()(Indices...) const;
+
+        template<size_t M>
+        array<M, false, T> reshape(const grad::shape<M>&) const;
+        template<size_t I = N - 1>
+        array<N - I, false, T> flatten() const;
+    };
+
     template<bool AD = autodiff, typename T = real, size_t N>
     inline auto make_array(const grad::shape<N>&);
 
@@ -105,35 +164,36 @@ namespace grad
 namespace grad
 {
     template<size_t N, bool AD, typename T>
+    array<N, AD, T>::array(cuda::shared_storage<T> *storage, const grad::shape<N> &shape, size_t offset)
+        : cuda::shared_array<T>(storage, shape.length(), offset),
+          _shape(shape),
+          _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+    {}
+
+    template<size_t N, bool AD, typename T>
     array<N, AD, T>::array(cuda::shared_storage<T> *storage, const grad::shape<N> &shape, size_t offset, size_t base_index)
         : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape),
           _grad_index(engine::get_tape<T>()->grad_from_base(base_index, shape.length(), offset))
     {}
 
-    template<size_t N, bool AD, typename T>
-    array<N, AD, T>::array(cuda::shared_array<T> *base, const grad::shape<N> &shape)
-        : cuda::shared_array<T>(*base),
+    template<size_t N, typename T>
+    array<N, false, T>::array(cuda::shared_storage<T> *storage, const grad::shape<N> &shape, size_t offset)
+        : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape)
     {}
-
-    template<bool AD, size_t N, typename T>
-    array<N, AD, T> ctor(cuda::shared_storage<T> *storage, const shape<N> &shape, size_t offset, size_t base_index)
-    {
-        return { storage, shape, offset, base_index };
-    }
-
-    template<bool AD, size_t N, typename T>
-    array<N, AD, T> ctor(cuda::shared_array<T> *base, const shape<N> &shape)
-    {
-        return { base, shape };
-    }
 
     template<size_t N, bool AD, typename T>
     array<N, AD, T>::array(const grad::shape<N> &shape)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
           _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+    {}
+
+    template<size_t N, typename T>
+    array<N, false, T>::array(const grad::shape<N> &shape)
+        : cuda::shared_array<T>(shape.length()),
+          _shape(shape)
     {}
 
     template<size_t N, bool AD, typename T>
@@ -150,8 +210,26 @@ namespace grad
         this->_storage->copy_from(host);
     }
 
+    template<size_t N, typename T>
+    template<typename InputIterator>
+    array<N, false, T>::array(const grad::shape<N> &shape, InputIterator first, InputIterator last)
+        : cuda::shared_array<T>(shape.length()),
+          _shape(shape)
+    {
+        auto dist = std::distance(first, last);
+        if (dist > this->_size)
+            throw std::invalid_argument("Iterator range exceeds array shape.");
+        cuda::host_buffer<T> host { first, last };
+        this->_storage->copy_from(host);
+    }
+
     template<size_t N, bool AD, typename T>
     array<N, AD, T>::array(const grad::shape<N> &shape, const std::initializer_list<T> &data)
+        : array(shape, data.begin(), data.end())
+    {}
+
+    template<size_t N, typename T>
+    array<N, false, T>::array(const grad::shape<N> &shape, const std::initializer_list<T> &data)
         : array(shape, data.begin(), data.end())
     {}
 
@@ -160,11 +238,33 @@ namespace grad
         : array(other._storage, other._shape, other._offset, other._grad_index)
     {}
 
+    //todo: decide if this should be allowed or not
+    template<size_t N, bool AD, typename T>
+    array<N, AD, T>::array(const array<N, false, T> &other)
+        : array(other._storage, other._shape, other._offset)
+    {}
+
+    template<size_t N, typename T>
+    array<N, false, T>::array(const array &other)
+        : array(other._storage, other._shape, other._offset)
+    {}
+
+    //todo: if expr is ad, compute grad of rvalue & push lvalue, do nothing otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T>::array(const grad::shape<N> &shape, const engine::expr<Expr> &expr)
-        : cuda::shared_array<T>(shape.length()), _shape(shape),
+        : cuda::shared_array<T>(shape.length()),
+          _shape(shape),
           _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+    {
+        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+    }
+
+    template<size_t N, typename T>
+    template<typename Expr, std::enable_if_t<!Expr::is_autodiff>*>
+    array<N, false, T>::array(const grad::shape<N> &shape, const engine::expr<Expr> &expr)
+            : cuda::shared_array<T>(shape.length()),
+              _shape(shape)
     {
         cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
     }
@@ -175,16 +275,34 @@ namespace grad
         : array(expr.self().shape(), expr)
     {}
 
+    template<size_t N, typename T>
+    template<typename Expr, std::enable_if_t<!Expr::is_autodiff>*>
+    array<N, false, T>::array(const engine::expr<Expr> &expr)
+        : array(expr.self().shape(), expr)
+    {}
+
     template<size_t N, bool AD, typename T>
     array<N, AD, T>::~array()
     {
-        if constexpr(AD)
-            engine::get_tape<T>()->delete_grad(_grad_index);
+        engine::get_tape<T>()->delete_grad(_grad_index);
     }
 
+    //todo: should probably clear all gradient data
     template<size_t N, bool AD, typename T>
     template<typename InputIterator>
     array<N, AD, T> &array<N, AD, T>::assign(InputIterator first, InputIterator last)
+    {
+        auto dist = std::distance(first, last);
+        if (dist > this->_size)
+            throw std::invalid_argument("Iterator range exceeds array shape.");
+        cuda::host_buffer<T> host { first, last };
+        this->_storage->copy_from(host, this->_offset);
+        return *this;
+    }
+
+    template<size_t N, typename T>
+    template<typename InputIterator>
+    array<N, false, T> &array<N, false, T>::assign(InputIterator first, InputIterator last)
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
@@ -200,6 +318,13 @@ namespace grad
         return assign(data.begin(), data.end());
     }
 
+    template<size_t N, typename T>
+    array<N, false, T> &array<N, false, T>::operator=(const std::initializer_list<T> &data)
+    {
+        return assign(data.begin(), data.end());
+    }
+
+    //todo: if expr is ad, compute grad of rvalue & push lvalue, probably clear grad data otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator=(const engine::expr<Expr> &expr)
@@ -267,6 +392,12 @@ namespace grad
         return _shape;
     }
 
+    template<size_t N, typename T>
+    const grad::shape<N> &array<N, false, T>::shape() const
+    {
+        return _shape;
+    }
+
     template<size_t N, bool AD, typename T>
     size_t array<N, AD, T>::shape(size_t i) const
     {
@@ -279,7 +410,7 @@ namespace grad
     {
         auto extents = _shape.template cut<I>();
         auto offset = _shape.offset(index);
-        return ctor<AD>(this->_storage, extents, this->_offset + offset, _grad_index);
+        return array<N - I, AD, T> { this->_storage, extents, this->_offset + offset, _grad_index };
     }
 
     template<size_t N, bool AD, typename T>
@@ -294,21 +425,22 @@ namespace grad
     array<M, AD, T> array<N, AD, T>::reshape(const grad::shape<M> &shape) const
     {
         if (this->_size != shape.length())
-            throw std::invalid_argument("Array length mismatch.");
-        return ctor<AD>(this->_storage, shape, this->_offset, _grad_index);
+            throw std::invalid_argument("Array size mismatch.");
+        return array<M, AD, T> { this->_storage, shape, this->_offset, _grad_index };
     }
 
     template<size_t N, bool AD, typename T>
     template<size_t I>
     array<N - I, AD, T> array<N, AD, T>::flatten() const
     {
-        return ctor<AD>(this->_storage, _shape.template flatten<I>(), this->_offset, _grad_index);
+        return array<N - I, AD, T> { this->_storage, _shape.template flatten<I>(), this->_offset, _grad_index };
     }
 
     template<size_t N, bool AD, typename T>
     array<N, false, T> array<N, AD, T>::grad() const
     {
-        return ctor<false>(engine::get_tape<T>()->get_grad(_grad_index), _shape);
+        return array<N, false, T>
+            { cuda::make_storage(engine::get_tape<T>()->get_grad(_grad_index), this->_size), _shape, this->_offset };
     }
 
     template<bool AD, typename T, size_t N>

@@ -2,6 +2,7 @@
 #include <vector>
 #include <list>
 #include "../cuda/shared_array.h"
+#include "../cuda/unique_array.h"
 
 namespace grad::engine
 {
@@ -12,22 +13,16 @@ namespace grad::engine
     class tape
     {
     private:
-        //statement stack
-        std::vector<size_t> _lvalue_grad_indices;
+        std::vector<size_t> _lvalue_indices;
         std::vector<size_t> _last_op_indices;
 
-        //operation stack
-        std::vector<cuda::shared_array<T>*> _multipliers;
-        std::vector<size_t> _rvalue_grad_indices;
+        std::vector<cuda::unique_array<T>*> _multipliers;
+        std::vector<size_t> _rvalue_indices;
 
-        //gradient stack
         std::vector<cuda::shared_array<T>*> _gradients;
-
-        //gap list
         std::list<size_t> _gaps;
 
-        //next available gradient index (without gaps)
-        size_t _next_grad_index = 0;
+        size_t _next_index = 0;
 
         tape() = default;
 
@@ -41,7 +36,10 @@ namespace grad::engine
         size_t grad_from_base(size_t, size_t, size_t);
         void delete_grad(size_t);
 
-        cuda::shared_array<T>* get_grad(size_t) const;
+        const T* get_grad(size_t) const;
+
+        void push_rvalue(cuda::unique_array<T>*, size_t);
+        void push_lvalue(size_t);
     };
 }
 
@@ -53,7 +51,7 @@ namespace grad::engine
         size_t index;
         if (_gaps.empty())
         {
-            index = _next_grad_index++;
+            index = _next_index++;
             _gradients.push_back(grad);
         }
         else
@@ -85,8 +83,22 @@ namespace grad::engine
     }
 
     template<typename T>
-    cuda::shared_array<T> *tape<T>::get_grad(size_t index) const
+    const T *tape<T>::get_grad(size_t index) const
     {
-        return _gradients[index];
+        return _gradients[index]->data();
+    }
+
+    template<typename T>
+    void tape<T>::push_rvalue(cuda::unique_array<T> *mult, size_t index)
+    {
+        _multipliers.push_back(mult);
+        _rvalue_indices.push_back(index);
+    }
+
+    template<typename T>
+    void tape<T>::push_lvalue(size_t index)
+    {
+        _lvalue_indices.push_back(index);
+        _last_op_indices.push_back(_rvalue_indices.size());
     }
 }

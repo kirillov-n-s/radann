@@ -45,7 +45,8 @@ add_executable(coursework main.cu
         grad/cuda/device_prop.h
         grad/engine/tape.h
         grad/engine/tape_context.h
-        grad/cuda/shared_array.h)
+        grad/cuda/shared_array.h
+        grad/cuda/unique_array.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

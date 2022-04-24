@@ -13,6 +13,7 @@ namespace grad::cuda
 
     public:
         shared_array(size_t);
+        shared_array(const T*, size_t);
         shared_array(shared_storage<T>*, size_t, size_t);
         shared_array(const shared_array&);
 
@@ -33,6 +34,11 @@ namespace grad::cuda
     template<typename T>
     shared_array<T>::shared_array(size_t size)
         : _storage(cuda::make_storage<T>(size)), _size(size)
+    {}
+
+    template<typename T>
+    shared_array<T>::shared_array(const T *device_ptr, size_t size)
+        : _storage(cuda::make_storage(device_ptr, size)), _size(size)
     {}
 
     template<typename T>

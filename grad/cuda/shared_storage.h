@@ -9,7 +9,6 @@ namespace grad::cuda
     private:
         T* _data;
         size_t _size;
-        size_t _nbytes;
         size_t _nrefs = 1;
 
         shared_storage(size_t);
@@ -27,8 +26,6 @@ namespace grad::cuda
         void remove_ref();
 
         size_t size() const;
-        size_t nbytes() const;
-        size_t nrefs() const;
 
         T* data(size_t = 0);
         const T* data(size_t = 0) const;
@@ -46,22 +43,20 @@ namespace grad::cuda
 {
     template<typename T>
     shared_storage<T>::shared_storage(size_t size)
-        : _size(size), _nbytes(size * sizeof(T))
+        : _size(size)
     {
-        auto status = cudaMalloc(&_data, _nbytes);
-        cudaDeviceSynchronize();
+        cudaMalloc(&_data, _size * sizeof(T));
+        cudaMemset(_data, 0, _size * sizeof(T));
+        auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();
     }
 
     template<typename T>
     shared_storage<T>::shared_storage(const T *device_ptr, size_t size)
-        : _size(size), _nbytes(size * sizeof(T))
+        : _size(size)
     {
-        auto status = cudaMalloc(&_data, _nbytes);
-        cudaDeviceSynchronize();
-        if (status != cudaError_t::cudaSuccess)
-            throw std::bad_alloc();
+        cudaMalloc(&_data, _size * sizeof(T));
         copy_from(device_ptr, size);
     }
 
@@ -74,9 +69,9 @@ namespace grad::cuda
     template<typename T>
     void shared_storage<T>::copy_from(const T *device_ptr, size_t size, size_t offset)
     {
-        auto status = cudaMemcpy(_data + offset, device_ptr, size * sizeof(T),
+        cudaMemcpy(_data + offset, device_ptr, size * sizeof(T),
                                  cudaMemcpyKind::cudaMemcpyDeviceToDevice);
-        cudaDeviceSynchronize();
+        auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();
     }
@@ -85,9 +80,9 @@ namespace grad::cuda
     void shared_storage<T>::copy_from(const host_buffer<T> &host, size_t offset)
     {
 
-        auto status = cudaMemcpy(_data + offset, host.data(), host.nbytes(),
+        cudaMemcpy(_data + offset, host.data(), host.size() * sizeof(T),
                                  cudaMemcpyKind::cudaMemcpyHostToDevice);
-        cudaDeviceSynchronize();
+        auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();
     }
@@ -101,8 +96,7 @@ namespace grad::cuda
     template<typename T>
     void shared_storage<T>::remove_ref()
     {
-        _nrefs--;
-        if (_nrefs == 0)
+        if (--_nrefs == 0)
             delete this;
     }
 
@@ -110,18 +104,6 @@ namespace grad::cuda
     size_t shared_storage<T>::size() const
     {
         return _size;
-    }
-
-    template<typename T>
-    size_t shared_storage<T>::nbytes() const
-    {
-        return _nbytes;
-    }
-
-    template<typename T>
-    size_t shared_storage<T>::nrefs() const
-    {
-        return _nrefs;
     }
 
     template<typename T>
@@ -149,8 +131,8 @@ namespace grad::cuda
     }
 
     template<typename T>
-    shared_storage<T> *make_storage(const T *src, size_t size)
+    shared_storage<T> *make_storage(const T *device_ptr, size_t size)
     {
-        return new shared_storage<T> {src, size };
+        return new shared_storage<T> {device_ptr, size };
     }
 }

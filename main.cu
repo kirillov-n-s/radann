@@ -10,9 +10,14 @@ int main()
     auto z = x.flatten();
     auto w = x(1);
 
+    auto dx = x.grad();
+    auto dy = y.grad();
+    auto dz = z.grad();
+    auto dw = w.grad();
+
     std::cout << x << y << z << w;
     std::cout << "\n-------------GRADIENTS-------------\n\n\n";
-    std::cout << x.grad() << y.grad() << z.grad() << w.grad();
+    std::cout << dx << dy << dz << dw;
 
     std::cin.get();
 }
