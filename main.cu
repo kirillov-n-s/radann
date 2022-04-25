@@ -5,19 +5,7 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
-    auto x = grad::make_arithm(grad::make_shape(3, 4, 2, 3), 1.f, 1.f);
-    auto y = x.reshape(grad::make_shape(8, 9));
-    auto z = x.flatten();
-    auto w = x(1);
 
-    auto dx = x.grad();
-    auto dy = y.grad();
-    auto dz = z.grad();
-    auto dw = w.grad();
-
-    std::cout << x << y << z << w;
-    std::cout << "\n-------------GRADIENTS-------------\n\n\n";
-    std::cout << dx << dy << dz << dw;
 
     std::cin.get();
 }

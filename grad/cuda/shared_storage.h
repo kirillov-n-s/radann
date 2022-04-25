@@ -26,6 +26,7 @@ namespace grad::cuda
         void remove_ref();
 
         size_t size() const;
+        size_t nrefs() const;
 
         T* data(size_t = 0);
         const T* data(size_t = 0) const;
@@ -104,6 +105,12 @@ namespace grad::cuda
     size_t shared_storage<T>::size() const
     {
         return _size;
+    }
+
+    template<typename T>
+    size_t shared_storage<T>::nrefs() const
+    {
+        return _nrefs;
     }
 
     template<typename T>

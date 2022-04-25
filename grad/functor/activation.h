@@ -7,7 +7,7 @@ namespace grad::functor
         template <typename T>
         __host__ __device__ inline T operator()(T x) const
         {
-            return 1 / (1 + ::exp(-x));
+            return T(1) / (T(1) + ::exp(-x));
         }
     };
 }

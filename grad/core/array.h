@@ -24,7 +24,7 @@ namespace grad
         size_t _grad_index;
 
     public:
-        array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t);
+        array(const T*, const grad::shape<N>&);
         array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t, size_t);
 
         array(const grad::shape<N>&);
@@ -33,7 +33,6 @@ namespace grad
         array(const grad::shape<N>&, const std::initializer_list<T>&);
 
         array(const array&);
-        array(const array<N, false, T>&);
 
         template<typename Expr>
         array(const grad::shape<N>&, const engine::expr<Expr>&);
@@ -91,6 +90,7 @@ namespace grad
         shape<N> _shape;
 
     public:
+        array(const T*, const grad::shape<N>&);
         array(cuda::shared_storage<T>*, const grad::shape<N>&, size_t);
 
         array(const grad::shape<N>&);
@@ -100,9 +100,9 @@ namespace grad
 
         array(const array&);
 
-        template<typename Expr, typename std::enable_if_t<!Expr::is_autodiff>* = nullptr>
+        template<typename Expr>
         array(const grad::shape<N>&, const engine::expr<Expr>&);
-        template<typename Expr, typename std::enable_if_t<!Expr::is_autodiff>* = nullptr>
+        template<typename Expr>
         array(const engine::expr<Expr>&);
 
         ~array() = default;
@@ -164,10 +164,16 @@ namespace grad
 namespace grad
 {
     template<size_t N, bool AD, typename T>
-    array<N, AD, T>::array(cuda::shared_storage<T> *storage, const grad::shape<N> &shape, size_t offset)
-        : cuda::shared_array<T>(storage, shape.length(), offset),
+    array<N, AD, T>::array(const T *device_ptr, const grad::shape<N> &shape)
+        : cuda::shared_array<T>(device_ptr, shape.length()),
           _shape(shape),
           _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+    {}
+
+    template<size_t N, typename T>
+    array<N, false, T>::array(const T *device_ptr, const grad::shape<N> &shape)
+        : cuda::shared_array<T>(device_ptr, shape.length()),
+          _shape(shape)
     {}
 
     template<size_t N, bool AD, typename T>
@@ -238,12 +244,6 @@ namespace grad
         : array(other._storage, other._shape, other._offset, other._grad_index)
     {}
 
-    //todo: decide if this should be allowed or not
-    template<size_t N, bool AD, typename T>
-    array<N, AD, T>::array(const array<N, false, T> &other)
-        : array(other._storage, other._shape, other._offset)
-    {}
-
     template<size_t N, typename T>
     array<N, false, T>::array(const array &other)
         : array(other._storage, other._shape, other._offset)
@@ -261,10 +261,10 @@ namespace grad
     }
 
     template<size_t N, typename T>
-    template<typename Expr, std::enable_if_t<!Expr::is_autodiff>*>
+    template<typename Expr>
     array<N, false, T>::array(const grad::shape<N> &shape, const engine::expr<Expr> &expr)
-            : cuda::shared_array<T>(shape.length()),
-              _shape(shape)
+        : cuda::shared_array<T>(shape.length()),
+          _shape(shape)
     {
         cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
     }
@@ -276,7 +276,7 @@ namespace grad
     {}
 
     template<size_t N, typename T>
-    template<typename Expr, std::enable_if_t<!Expr::is_autodiff>*>
+    template<typename Expr>
     array<N, false, T>::array(const engine::expr<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
@@ -333,8 +333,24 @@ namespace grad
         return *this;
     }
 
+    template<size_t N, typename T>
+    template<typename Expr>
+    array<N, false, T> &array<N, false, T>::operator=(const engine::expr<Expr> &expr)
+    {
+        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+        return *this;
+    }
+
     template<size_t N, bool AD, typename T>
     array<N, AD, T> &array<N, AD, T>::operator=(const array &other)
+    {
+        if (this == &other)
+            return *this;
+        return (*this = engine::get_access(other));
+    }
+
+    template<size_t N, typename T>
+    array<N, false, T> &array<N, false, T>::operator=(const array &other)
     {
         if (this == &other)
             return *this;
@@ -345,36 +361,74 @@ namespace grad
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator+=(const engine::expr<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, *this + expr);
-        return *this;
+        return (*this = *this + expr);
+    }
+
+    template<size_t N, typename T>
+    template<typename Expr>
+    array<N, false, T> &array<N, false, T>::operator+=(const engine::expr<Expr> &expr)
+    {
+        return (*this = *this + expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator-=(const engine::expr<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, *this - expr);
-        return *this;
+        return (*this = *this - expr);
+    }
+
+    template<size_t N, typename T>
+    template<typename Expr>
+    array<N, false, T> &array<N, false, T>::operator-=(const engine::expr<Expr> &expr)
+    {
+        return (*this = *this - expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator*=(const engine::expr<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, *this * expr);
-        return *this;
+        return (*this = *this * expr);
+    }
+
+    template<size_t N, typename T>
+    template<typename Expr>
+    array<N, false, T> &array<N, false, T>::operator*=(const engine::expr<Expr> &expr)
+    {
+        return (*this = *this * expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator/=(const engine::expr<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, *this / expr);
+        return (*this = *this / expr);
+    }
+
+    template<size_t N, typename T>
+    template<typename Expr>
+    array<N, false, T> &array<N, false, T>::operator/=(const engine::expr<Expr> &expr)
+    {
+        return (*this = *this / expr);
+    }
+
+    //todo: clear all previous gradient data, delete grad by index
+    template<size_t N, bool AD, typename T>
+    array<N, AD, T> &array<N, AD, T>::operator>>=(const array &other)
+    {
+        if (this == &other)
+            return *this;
+        this->_storage->remove_ref();
+        this->_storage = other._storage;
+        this->_storage->add_ref();
+        _shape = other._shape;
+        this->_offset = other._offset;
         return *this;
     }
 
-    template<size_t N, bool AD, typename T>
-    array<N, AD, T> &array<N, AD, T>::operator>>=(const array &other)
+    template<size_t N, typename T>
+    array<N, false, T> &array<N, false, T>::operator>>=(const array &other)
     {
         if (this == &other)
             return *this;
@@ -404,6 +458,12 @@ namespace grad
         return _shape[i];
     }
 
+    template<size_t N, typename T>
+    size_t array<N, false, T>::shape(size_t i) const
+    {
+        return _shape[i];
+    }
+
     template<size_t N, bool AD, typename T>
     template<size_t I>
     array<N - I, AD, T> array<N, AD, T>::at(const grad::shape<I> &index) const
@@ -413,9 +473,25 @@ namespace grad
         return array<N - I, AD, T> { this->_storage, extents, this->_offset + offset, _grad_index };
     }
 
+    template<size_t N, typename T>
+    template<size_t I>
+    array<N - I, false, T> array<N, false, T>::at(const grad::shape<I> &index) const
+    {
+        auto extents = _shape.template cut<I>();
+        auto offset = _shape.offset(index);
+        return array<N - I, false, T> { this->_storage, extents, this->_offset + offset };
+    }
+
     template<size_t N, bool AD, typename T>
     template<typename... Indices>
     array<N - sizeof...(Indices), AD, T> array<N, AD, T>::operator()(Indices... indices) const
+    {
+        return at(make_shape(indices...));
+    }
+
+    template<size_t N, typename T>
+    template<typename... Indices>
+    array<N - sizeof...(Indices), false, T> array<N, false, T>::operator()(Indices... indices) const
     {
         return at(make_shape(indices...));
     }
@@ -429,6 +505,15 @@ namespace grad
         return array<M, AD, T> { this->_storage, shape, this->_offset, _grad_index };
     }
 
+    template<size_t N, typename T>
+    template<size_t M>
+    array<M, false, T> array<N, false, T>::reshape(const grad::shape<M> &shape) const
+    {
+        if (this->_size != shape.length())
+            throw std::invalid_argument("Array size mismatch.");
+        return array<M, false, T> { this->_storage, shape, this->_offset };
+    }
+
     template<size_t N, bool AD, typename T>
     template<size_t I>
     array<N - I, AD, T> array<N, AD, T>::flatten() const
@@ -436,11 +521,17 @@ namespace grad
         return array<N - I, AD, T> { this->_storage, _shape.template flatten<I>(), this->_offset, _grad_index };
     }
 
+    template<size_t N, typename T>
+    template<size_t I>
+    array<N - I, false, T> array<N, false, T>::flatten() const
+    {
+        return array<N - I, false, T> { this->_storage, _shape.template flatten<I>(), this->_offset };
+    }
+
     template<size_t N, bool AD, typename T>
     array<N, false, T> array<N, AD, T>::grad() const
     {
-        return array<N, false, T>
-            { cuda::make_storage(engine::get_tape<T>()->get_grad(_grad_index), this->_size), _shape, this->_offset };
+        return array<N, false, T> { engine::get_tape<T>()->get_grad(_grad_index), _shape };
     }
 
     template<bool AD, typename T, size_t N>
@@ -491,20 +582,27 @@ namespace grad
         constexpr auto ad = AD ? "AD = true\n" : "AD = false\n";
 
         const auto host = array.host();
-        auto data = host.data();
+        const auto data = host.data();
+        const auto storage = array.storage();
+
         /*out
             << std::scientific
             << std::setprecision(std::numeric_limits<T>::max_digits10)
             << std::right
             << std::showpos;*/
+
+        out << "0x" << storage->data() << '\n'
+            << "nrefs = " << storage->nrefs() << '\n'
+            << ad;
+
         if constexpr(N == 0)
-            return out << ad << '[' << data[0] << "]\n\n";
+            return out << '[' << data[0] << "]\n\n";
 
         const auto& shape = array.shape();
-        std::array<size_t, shape.rank> prods;
+        std::array<size_t, N> prods;
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
-        out << ad << shape << '[' << data[0];
+        out << shape << '[' << data[0];
 
         auto n = shape.length();
         if (n > 1)
