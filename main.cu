@@ -1,11 +1,15 @@
-#include "grad/grad.h"
+#include "radar/radar.h"
 #include <chrono>
 
 using timer = std::chrono::system_clock;
 
 int main()
 {
+    auto x = radar::make_arithm(radar::make_shape(3, 4), 1.f, 1.f);
+    auto y = radar::make_arithm(radar::make_shape(3, 4), -1.f, -1.f);
+    auto z = radar::make_ones(radar::make_shape(3, 4));
 
+    auto a = radar::eval(x + y * z);
 
     std::cin.get();
 }
@@ -30,11 +34,11 @@ int main()
         for (int i = 0; i < k; i++)
         {
             auto m = n[i];
-            auto x = grad::make_arithm(grad::make_shape(m), 0.f, 1.f);
-            auto y = grad::make_array(grad::sigmoid(x));
+            auto x = radar::make_arithm(radar::make_shape(m), 0.f, 1.f);
+            auto y = radar::make_array(radar::sigmoid(x));
 
             auto then = timer::now();
-            auto z = grad::eval(grad::sin(x) / grad::pow2(y) + get_grad::log(3._fC));
+            auto z = radar::eval(radar::sin(x) / radar::pow2(y) + get_grad::log(3._fC));
             time[i] += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
         }
     auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
