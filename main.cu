@@ -1,15 +1,15 @@
-#include "radar/radar.h"
+#include "radann/radann.h"
 #include <chrono>
 
 using timer = std::chrono::system_clock;
 
 int main()
 {
-    auto x = radar::make_arithm(radar::make_shape(3, 4), 1.f, 1.f);
-    auto y = radar::make_arithm(radar::make_shape(3, 4), -1.f, -1.f);
-    auto z = radar::make_ones(radar::make_shape(3, 4));
+    auto x = radann::make_arithm(radann::make_shape(3, 4), 1.f, 1.f);
+    auto y = radann::make_arithm(radann::make_shape(3, 4), -1.f, -1.f);
+    auto z = radann::make_ones(radann::make_shape(3, 4));
 
-    auto a = radar::eval(x + y * z);
+    auto a = radann::eval(x + y * z);
 
     std::cin.get();
 }
@@ -34,11 +34,11 @@ int main()
         for (int i = 0; i < k; i++)
         {
             auto m = n[i];
-            auto x = radar::make_arithm(radar::make_shape(m), 0.f, 1.f);
-            auto y = radar::make_array(radar::sigmoid(x));
+            auto x = radann::make_arithm(radann::make_shape(m), 0.f, 1.f);
+            auto y = radann::make_array(radann::sigmoid(x));
 
             auto then = timer::now();
-            auto z = radar::eval(radar::sin(x) / radar::pow2(y) + get_grad::log(3._fC));
+            auto z = radann::eval(radann::sin(x) / radann::pow2(y) + get_grad::log(3._fC));
             time[i] += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
         }
     auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
