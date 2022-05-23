@@ -17,6 +17,12 @@ namespace radann::functor
             cuda::reduce(x.data(), res.data(), x.size(), add{});
             return res;
         }
+
+        template<typename Arg, typename Mult>
+        auto accumulate_grad(const engine::expr<Arg> &arg, const engine::expr<Mult> &mult) const
+        {
+            return ;
+        }
     };
 
     struct prod

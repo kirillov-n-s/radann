@@ -2,22 +2,22 @@
 
 namespace radann::cuda
 {
-    class prop_context
+    class prop
     {
     private:
         cudaDeviceProp* _handle;
-        prop_context();
+        prop();
 
     public:
-        prop_context(const prop_context&) = delete;
-        ~prop_context();
+        prop(const prop&) = delete;
+        ~prop();
         friend cudaDeviceProp* get_prop();
     };
 }
 
 namespace radann::cuda
 {
-    prop_context::prop_context()
+    prop::prop()
         : _handle(new cudaDeviceProp())
     {
         int device;
@@ -25,14 +25,14 @@ namespace radann::cuda
         cudaGetDeviceProperties(_handle, device);
     }
 
-    prop_context::~prop_context()
+    prop::~prop()
     {
         delete _handle;
     }
 
     cudaDeviceProp* get_prop()
     {
-        static prop_context context;
+        static prop context;
         return context._handle;
     }
 }

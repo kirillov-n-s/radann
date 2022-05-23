@@ -5,8 +5,7 @@
 #include "core/binary.h"
 #include "core/linalg.h"
 #include "core/reduce.h"
-#include "core/extension.h"
-#include "core/activation.h"
+#include "core/tape.h"
 
 using radann::operator+;
 using radann::operator-;

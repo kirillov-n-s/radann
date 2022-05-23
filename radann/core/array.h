@@ -26,7 +26,7 @@ namespace radann
 
     public:
         array(const T*, const radann::shape<N>&);
-        array(cuda::shared_storage<T>*, const radann::shape<N>&, size_t, size_t);
+        array(cuda::shared_storage<T>*, const radann::shape<N>&, size_t, size_t, bool = true);
 
         array(const radann::shape<N>&);
         template<typename InputIterator>
@@ -40,7 +40,7 @@ namespace radann
         template<typename Expr>
         array(const engine::expr<Expr>&);
 
-        ~array();
+        ~array() = default;
 
         template<typename InputIterator>
         array& assign(InputIterator, InputIterator);
@@ -74,7 +74,9 @@ namespace radann
         array<N - I, AD, T> flatten() const;
 
         size_t grad_index() const;
-        array<N, false, T> grad() const;
+        array<N, false, T> get_grad() const;
+        template<typename Expr>
+        void set_grad(const engine::expr<Expr>&) const;
     };
 
     template<size_t N, typename T>
@@ -169,7 +171,7 @@ namespace radann
     array<N, AD, T>::array(const T *device_ptr, const radann::shape<N> &shape)
         : cuda::shared_array<T>(device_ptr, shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
     {}
 
     template<size_t N, typename T>
@@ -179,10 +181,13 @@ namespace radann
     {}
 
     template<size_t N, bool AD, typename T>
-    array<N, AD, T>::array(cuda::shared_storage<T> *storage, const radann::shape<N> &shape, size_t offset, size_t base_index)
+    array<N, AD, T>::array(cuda::shared_storage<T> *storage, const radann::shape<N> &shape,
+                           size_t offset, size_t base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->grad_from_base(base_index, shape.length(), offset))
+          _grad_index(derive
+                      ? engine::get_tape<T>()->derive_grad(base_index, shape.length(), offset)
+                      : base_index)
     {}
 
     template<size_t N, typename T>
@@ -195,7 +200,7 @@ namespace radann
     array<N, AD, T>::array(const radann::shape<N> &shape)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
     {}
 
     template<size_t N, typename T>
@@ -209,7 +214,7 @@ namespace radann
     array<N, AD, T>::array(const radann::shape<N> &shape, InputIterator first, InputIterator last)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
@@ -243,7 +248,7 @@ namespace radann
 
     template<size_t N, bool AD, typename T>
     array<N, AD, T>::array(const array &other)
-        : array(other._storage, other._shape, other._offset, other._grad_index)
+        : array(other._storage, other._shape, other._offset, other._grad_index, false)
     {}
 
     template<size_t N, typename T>
@@ -251,13 +256,13 @@ namespace radann
         : array(other._storage, other._shape, other._offset)
     {}
 
-    //todo: if expr is ad, compute radann of rvalue & push lvalue, do nothing otherwise
+    //todo: if expr is ad, compute get_grad of rvalue & push lvalue, do nothing otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T>::array(const radann::shape<N> &shape, const engine::expr<Expr> &expr)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->new_grad(shape.length()))
+          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
     {
         cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
         if constexpr(Expr::is_autodiff)
@@ -287,12 +292,6 @@ namespace radann
     array<N, false, T>::array(const engine::expr<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
-
-    template<size_t N, bool AD, typename T>
-    array<N, AD, T>::~array()
-    {
-        engine::get_tape<T>()->delete_grad(_grad_index);
-    }
 
     //todo: should probably clear all gradient data
     template<size_t N, bool AD, typename T>
@@ -331,7 +330,7 @@ namespace radann
         return assign(data.begin(), data.end());
     }
 
-    //todo: if expr is ad, compute radann of rvalue & push lvalue, probably clear radann data otherwise
+    //todo: if expr is ad, compute grad of rvalue & push lvalue, probably clear get_grad data otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
     array<N, AD, T> &array<N, AD, T>::operator=(const engine::expr<Expr> &expr)
@@ -420,7 +419,7 @@ namespace radann
         return (*this = *this / expr);
     }
 
-    //todo: clear all previous gradient data, delete radann by index
+    //todo: clear all previous gradient data, delete get_grad by index
     template<size_t N, bool AD, typename T>
     array<N, AD, T> &array<N, AD, T>::operator>>=(const array &other)
     {
@@ -542,9 +541,16 @@ namespace radann
     }
 
     template<size_t N, bool AD, typename T>
-    array<N, false, T> array<N, AD, T>::grad() const
+    array<N, false, T> array<N, AD, T>::get_grad() const
     {
         return array<N, false, T> { engine::get_tape<T>()->get_grad(_grad_index), _shape };
+    }
+
+    template<size_t N, bool AD, typename T>
+    template<typename Expr>
+    void array<N, AD, T>::set_grad(const engine::expr<Expr> &expr) const
+    {
+        engine::get_tape<T>()->set_grad(_grad_index, expr);
     }
 
     template<bool AD, typename T, size_t N>

@@ -114,10 +114,7 @@ namespace radann::engine
     template<typename Expr>
     void access<N, AD, T>::propagate_grad(const expr<Expr> &mult) const
     {
-        auto mult_self = mult.self();
-        auto mult_eval = new cuda::unique_array<T> { _size };
-        cuda::assign(mult_eval->data(), mult_eval->size(), mult_self);
-        get_tape<T>()->push_rvalue(mult_eval, _grad_index);
+        get_tape<T>()->push_rvalue(_grad_index, mult);
     }
 
     template<typename Expr>

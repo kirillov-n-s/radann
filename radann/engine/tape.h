@@ -3,6 +3,7 @@
 #include <list>
 #include "../cuda/shared_array.h"
 #include "../cuda/unique_array.h"
+#include "../cuda/assign.h"
 
 namespace radann::engine
 {
@@ -20,7 +21,6 @@ namespace radann::engine
         std::vector<size_t> _rvalue_indices;
 
         std::vector<cuda::shared_array<T>*> _gradients;
-        std::list<size_t> _gaps;
 
         size_t _next_index = 0;
 
@@ -32,14 +32,19 @@ namespace radann::engine
         tape(const tape&) = delete;
         friend class tape_context<T>;
 
-        size_t new_grad(size_t);
-        size_t grad_from_base(size_t, size_t, size_t);
-        void delete_grad(size_t);
+        size_t create_grad(size_t);
+        size_t derive_grad(size_t, size_t, size_t);
 
         const T* get_grad(size_t) const;
+        template<typename Expr>
+        void set_grad(size_t, const expr<Expr>&);
 
-        void push_rvalue(cuda::unique_array<T>*, size_t);
+        template<typename Expr>
+        void push_rvalue(size_t, const expr<Expr>&);
         void push_lvalue(size_t);
+
+        void reverse();
+        void clear();
     };
 }
 
@@ -48,38 +53,20 @@ namespace radann::engine
     template<typename T>
     size_t tape<T>::push_grad(cuda::shared_array<T> *grad)
     {
-        size_t index;
-        if (_gaps.empty())
-        {
-            index = _next_index++;
-            _gradients.push_back(grad);
-        }
-        else
-        {
-            index = _gaps.front();
-            _gaps.pop_front();
-            _gradients[index] = grad;
-        }
-        return index;
+        _gradients.push_back(grad);
+        return _next_index++;
     }
 
     template<typename T>
-    size_t tape<T>::new_grad(size_t size)
+    size_t tape<T>::create_grad(size_t size)
     {
         return push_grad(new cuda::shared_array<T>(size));
     }
 
     template<typename T>
-    size_t tape<T>::grad_from_base(size_t base_index, size_t size, size_t offset)
+    size_t tape<T>::derive_grad(size_t base_index, size_t size, size_t offset)
     {
         return push_grad(new cuda::shared_array<T>(_gradients[base_index]->storage(), size, offset));
-    }
-
-    template<typename T>
-    void tape<T>::delete_grad(size_t index)
-    {
-        _gaps.push_back(index);
-        delete _gradients[index];
     }
 
     template<typename T>
@@ -89,9 +76,22 @@ namespace radann::engine
     }
 
     template<typename T>
-    void tape<T>::push_rvalue(cuda::unique_array<T> *mult, size_t index)
+    template<typename Expr>
+    void tape<T>::set_grad(size_t index, const expr<Expr> &grad)
     {
-        _multipliers.push_back(mult);
+        auto grad_array = _gradients[index];
+        cuda::assign(grad_array->data(), grad_array->size(), grad.self());
+    }
+
+    template<typename T>
+    template<typename Expr>
+    void tape<T>::push_rvalue(size_t index, const expr<Expr> &mult)
+    {
+        auto size = _gradients[index]->size();
+        auto array = new cuda::unique_array<T> { size };
+        cuda::assign(array->data(), size, mult.self());
+
+        _multipliers.push_back(array);
         _rvalue_indices.push_back(index);
     }
 
@@ -100,5 +100,35 @@ namespace radann::engine
     {
         _lvalue_indices.push_back(index);
         _last_op_indices.push_back(_rvalue_indices.size());
+    }
+
+    template<typename T>
+    void tape<T>::reverse()
+    {
+        for (size_t i = _lvalue_indices.size() - 1; i > 0; i--)
+        {
+            auto grad = _gradients[_lvalue_indices[i]];
+            for (size_t j = _last_op_indices[i - 1]; j < _last_op_indices[i]; j++)
+                cuda::fma(_gradients[_rvalue_indices[j]]->data(),
+                          _multipliers[j]->data(),
+                          grad->data(),
+                          grad->size());
+        }
+
+        auto grad = _gradients[_lvalue_indices[0]];
+        for (size_t j = 0; j < _last_op_indices[0]; j++)
+            cuda::fma(_gradients[_rvalue_indices[j]]->data(),
+                      _multipliers[j]->data(),
+                      grad->data(),
+                      grad->size());
+    }
+
+    template<typename T>
+    void tape<T>::clear()
+    {
+        for (auto& grad : _gradients)
+            delete grad;
+        for (auto& mult : _multipliers)
+            delete mult;
     }
 }

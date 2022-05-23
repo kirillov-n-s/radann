@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/extension.h"
+#include "../core/unary.h"
 
 namespace radann::functor
 {

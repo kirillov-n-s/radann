@@ -12,7 +12,6 @@ add_executable(coursework main.cu
         radann/core/unary.h
         radann/functor/binary.h
         radann/core/binary.h
-        radann/functor/extension.h
         radann/cuda/kernel/assign.h
         radann/cuda/assign.h
         radann/engine/unary_lazy.h
@@ -38,16 +37,13 @@ add_executable(coursework main.cu
         radann/core/util.h
         radann/functor/reduce.h
         radann/engine/binary_eager.h
-        radann/core/extension.h
-        radann/functor/activation.h
-        radann/core/activation.h
         radann/core/default.h
-        radann/cuda/prop_context.h
+        radann/cuda/prop.h
         radann/engine/tape.h
         radann/engine/tape_context.h
         radann/cuda/shared_array.h
         radann/cuda/unique_array.h
-        radann/cuda/launch.h)
+        radann/cuda/launch.h radann/core/tape.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
