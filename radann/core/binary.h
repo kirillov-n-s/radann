@@ -1,81 +1,81 @@
 #pragma once
-#include "../engine/binary_lazy.h"
-#include "../functor/binary.h"
+#include "../expr/binary.h"
+#include "../func/binary.h"
 
 namespace radann
 {
     template <typename Lhs, typename Rhs>
-    inline auto operator+(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto operator+(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto operator-(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto operator-(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto operator*(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto operator*(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto operator/(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto operator/(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto pow(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto pow(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto atan2(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto atan2(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto min(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto min(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto max(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto max(const expr::base<Lhs>&, const expr::base<Rhs>&);
 }
 
 namespace radann
 {
     template <typename Lhs, typename Rhs>
-    inline auto operator+(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto operator+(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::add{}, lhs, rhs);
+        return expr::make_lazy(func::add{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto operator-(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto operator-(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::sub{}, lhs, rhs);
+        return expr::make_lazy(func::sub{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto operator*(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto operator*(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::mul{}, lhs, rhs);
+        return expr::make_lazy(func::mul{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto operator/(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto operator/(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::div{}, lhs, rhs);
+        return expr::make_lazy(func::div{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto pow(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto pow(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::pow{}, lhs, rhs);
+        return expr::make_lazy(func::pow{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto atan2(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto atan2(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::atan2{}, lhs, rhs);
+        return expr::make_lazy(func::atan2{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto min(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto min(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::min{}, lhs, rhs);
+        return expr::make_lazy(func::min{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto max(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs)
+    inline auto max(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return engine::make_lazy(functor::max{}, lhs, rhs);
+        return expr::make_lazy(func::max{}, lhs, rhs);
     }
 }

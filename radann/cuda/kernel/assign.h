@@ -7,7 +7,7 @@ namespace radann::cuda::kernel
     __global__ void assign(T*, size_t, Expr);
 
     template <typename T>
-    __global__ void fma(T*, const T*, const T*, size_t);
+    __global__ void reverse_grad(T*, const T*, const T*, size_t, size_t);
 }
 
 namespace radann::cuda::kernel
@@ -22,11 +22,13 @@ namespace radann::cuda::kernel
     }
 
     template <typename T>
-    __global__ void fma(T *lvalue, const T *mult, const T *rvalue, size_t size)
+    __global__ void reverse_grad(T *input_grad,
+                                 const T *mult, const T *output_grad,
+                                 size_t input_size, size_t output_size)
     {
         for (auto i = blockIdx.x * blockDim.x + threadIdx.x;
-                i < size;
+                i < input_size;
                 i += blockDim.x * gridDim.x)
-            lvalue[i] += mult[i] * rvalue[i];
+            input_grad[i] += mult[i] * output_grad[i % output_size];
     }
 }

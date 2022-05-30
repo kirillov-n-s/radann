@@ -1,6 +1,6 @@
 #pragma once
 
-namespace radann::functor
+namespace radann::func
 {
     struct neg
     {
@@ -12,7 +12,7 @@ namespace radann::functor
         }
 
         template<typename Arg, typename Mult>
-        auto accumulate_grad(const engine::expr<Arg> &arg, const engine::expr<Mult> &mult) const
+        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
         {
             return -mult;
         }
@@ -55,6 +55,12 @@ namespace radann::functor
 		T operator()(T x) const
         {
             return ::sin(x);
+        }
+
+        template<typename Arg, typename Mult>
+        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
+        {
+            return radann::cos(arg) * mult;
         }
     };
 
@@ -216,6 +222,12 @@ namespace radann::functor
         {
             return ::log(x);
         }
+
+        template<typename Arg, typename Mult>
+        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
+        {
+            return mult / arg;
+        }
     };
 
     struct log2
@@ -278,7 +290,7 @@ namespace radann::functor
         }
 
         template<typename Arg, typename Mult>
-        auto accumulate_grad(const engine::expr<Arg> &arg, const engine::expr<Mult> &mult) const
+        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
         {
             return radann::constant<typename Arg::value_type>(2) * arg * mult;
         }

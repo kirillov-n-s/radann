@@ -2,14 +2,14 @@
 #include "../cuda/cublas.h"
 #include "../core/array.h"
 
-namespace radann::functor
+namespace radann::func
 {
     struct dot
     {
         static constexpr bool requires_validation = true;
 
         template<typename Lhs, typename Rhs>
-        void validate(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs) const
+        void validate(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs) const
         {
             if (lhs.self().shape() != rhs.self().shape())
                 throw std::invalid_argument("Shape mismatch in dot product.");
@@ -45,7 +45,7 @@ namespace radann::functor
         static constexpr bool requires_validation = true;
 
         template<typename Lhs, typename Rhs>
-        void validate(const engine::expr<Lhs> &lhs, const engine::expr<Rhs> &rhs) const
+        void validate(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs) const
         {
             static_assert(!RTrans || Rhs::rank == 2, "Non-matrix transposition attempt in matrix multiplication.");
             if (lhs.self().shape(!LTrans) != rhs.self().shape(RTrans))
@@ -69,6 +69,22 @@ namespace radann::functor
             cuda::cublas::gemm<LTrans, RTrans>(x.data(), y.data(), res.data(),
                                                rows, x.shape(!LTrans), cols);
             return res;
+        }
+
+        template<typename Lhs, typename Rhs, typename Mult>
+        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
+        {
+            return mult.self();
+        }
+
+        template<typename Lhs, typename Rhs, typename Mult>
+        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
+        {
+            return mult.self();
         }
     };
 

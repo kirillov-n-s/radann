@@ -1,6 +1,6 @@
 #pragma once
 
-namespace radann::functor
+namespace radann::func
 {
     template <typename T>
     class constant

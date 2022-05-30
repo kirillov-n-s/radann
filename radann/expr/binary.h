@@ -1,10 +1,10 @@
 #pragma once
 #include "access.h"
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Op, typename Lhs, typename Rhs>
-    class binary_lazy : public expr<binary_lazy<Op, Lhs, Rhs>>
+    class binary : public base<binary<Op, Lhs, Rhs>>
     {
     public:
         using value_type = std::common_type_t<typename Lhs::value_type, typename Rhs::value_type>;
@@ -18,7 +18,7 @@ namespace radann::engine
         Rhs _rhs;
 
     public:
-        binary_lazy(const Op&, const Lhs&, const Rhs&);
+        binary(const Op&, const Lhs&, const Rhs&);
 
         __host__ __device__ inline
         value_type operator[](size_t) const;
@@ -27,28 +27,28 @@ namespace radann::engine
         size_t shape(size_t) const;
 
         template<typename Expr>
-        void propagate_grad(const expr<Expr>&) const;
+        void propagate_grad(const base<Expr>&) const;
 
         template<typename Op, typename Lhs, typename Rhs>
-        friend inline auto make_lazy(const Op&, const expr<Lhs>&, const expr<Rhs>&);
+        friend inline auto make_lazy(const Op&, const base<Lhs>&, const base<Rhs>&);
     };
 }
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Op, typename Lhs, typename Rhs>
-    engine::binary_lazy<Op, Lhs, Rhs>::binary_lazy(const Op &op, const Lhs &lhs, const Rhs &rhs)
+    expr::binary<Op, Lhs, Rhs>::binary(const Op &op, const Lhs &lhs, const Rhs &rhs)
         : _op(op), _lhs(lhs), _rhs(rhs) {}
 
     template<typename Op, typename Lhs, typename Rhs>
     __host__ __device__
-    typename binary_lazy<Op, Lhs, Rhs>::value_type binary_lazy<Op, Lhs, Rhs>::operator[](size_t i) const
+    typename binary<Op, Lhs, Rhs>::value_type binary<Op, Lhs, Rhs>::operator[](size_t i) const
     {
         return _op(_lhs[i], _rhs[i]);
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    auto binary_lazy<Op, Lhs, Rhs>::shape() const
+    auto binary<Op, Lhs, Rhs>::shape() const
     {
         if constexpr(Lhs::rank > Rhs::rank)
             return _lhs.shape();
@@ -57,14 +57,14 @@ namespace radann::engine
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    size_t binary_lazy<Op, Lhs, Rhs>::shape(size_t i) const
+    size_t binary<Op, Lhs, Rhs>::shape(size_t i) const
     {
         return (Lhs::rank > Rhs::rank) ? _lhs.shape(i) : _rhs.shape(i);
     }
 
     template<typename Op, typename Lhs, typename Rhs>
     template<typename Expr>
-    void binary_lazy<Op, Lhs, Rhs>::propagate_grad(const expr<Expr> &mult) const
+    void binary<Op, Lhs, Rhs>::propagate_grad(const base<Expr> &mult) const
     {
         if constexpr (Lhs::is_autodiff)
             _lhs.propagate_grad(_op.accumulate_grad_lhs(_lhs, _rhs, mult));
@@ -73,8 +73,8 @@ namespace radann::engine
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    inline auto make_lazy(const Op& op, const expr<Lhs>& lhs, const expr<Rhs>& rhs)
+    inline auto make_lazy(const Op& op, const base<Lhs>& lhs, const base<Rhs>& rhs)
     {
-        return binary_lazy {op, get_access(lhs.self()), get_access(rhs.self()) };
+        return binary {op, get_access(lhs.self()), get_access(rhs.self()) };
     }
 }

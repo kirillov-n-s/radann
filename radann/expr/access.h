@@ -1,11 +1,11 @@
 #pragma once
-#include "expr.h"
+#include "base.h"
 #include "tape_context.h"
 
-namespace radann::engine
+namespace radann::expr
 {
     template<size_t N, bool AD, typename T>
-    class access : public expr<access<N, AD, T>>
+    class access : public base<access<N, AD, T>>
     {
     public:
         using value_type = T;
@@ -29,11 +29,11 @@ namespace radann::engine
         size_t shape(size_t) const;
 
         template<typename Expr>
-        void propagate_grad(const expr<Expr>&) const;
+        void propagate_grad(const base<Expr>&) const;
     };
 
     template<size_t N, typename T>
-    class access<N, false, T> : public expr<access<N, false, T>>
+    class access<N, false, T> : public base<access<N, false, T>>
     {
     public:
         using value_type = T;
@@ -60,7 +60,7 @@ namespace radann::engine
     inline auto get_access(const Expr&);
 }
 
-namespace radann::engine
+namespace radann::expr
 {
     template<size_t N, bool AD, typename T>
     access<N, AD, T>::access(const T *data, size_t size, const radann::shape<N> &shape, size_t grad_index)
@@ -112,7 +112,7 @@ namespace radann::engine
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    void access<N, AD, T>::propagate_grad(const expr<Expr> &mult) const
+    void access<N, AD, T>::propagate_grad(const base<Expr> &mult) const
     {
         get_tape<T>()->push_rvalue(_grad_index, mult);
     }

@@ -5,7 +5,7 @@
 #include "../cuda/unique_array.h"
 #include "../cuda/assign.h"
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename T>
     class tape_context;
@@ -37,10 +37,10 @@ namespace radann::engine
 
         const T* get_grad(size_t) const;
         template<typename Expr>
-        void set_grad(size_t, const expr<Expr>&);
+        void set_grad(size_t, const base<Expr>&);
 
         template<typename Expr>
-        void push_rvalue(size_t, const expr<Expr>&);
+        void push_rvalue(size_t, const base<Expr>&);
         void push_lvalue(size_t);
 
         void reverse();
@@ -48,7 +48,7 @@ namespace radann::engine
     };
 }
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename T>
     size_t tape<T>::push_grad(cuda::shared_array<T> *grad)
@@ -77,7 +77,7 @@ namespace radann::engine
 
     template<typename T>
     template<typename Expr>
-    void tape<T>::set_grad(size_t index, const expr<Expr> &grad)
+    void tape<T>::set_grad(size_t index, const base<Expr> &grad)
     {
         auto grad_array = _gradients[index];
         cuda::assign(grad_array->data(), grad_array->size(), grad.self());
@@ -85,7 +85,7 @@ namespace radann::engine
 
     template<typename T>
     template<typename Expr>
-    void tape<T>::push_rvalue(size_t index, const expr<Expr> &mult)
+    void tape<T>::push_rvalue(size_t index, const base<Expr> &mult)
     {
         auto size = _gradients[index]->size();
         auto array = new cuda::unique_array<T> { size };
@@ -107,20 +107,28 @@ namespace radann::engine
     {
         for (size_t i = _lvalue_indices.size() - 1; i > 0; i--)
         {
-            auto grad = _gradients[_lvalue_indices[i]];
+            auto output_grad = _gradients[_lvalue_indices[i]];
             for (size_t j = _last_op_indices[i - 1]; j < _last_op_indices[i]; j++)
-                cuda::fma(_gradients[_rvalue_indices[j]]->data(),
-                          _multipliers[j]->data(),
-                          grad->data(),
-                          grad->size());
+            {
+                auto input_grad = _gradients[_rvalue_indices[j]];
+                cuda::reverse_grad(input_grad->data(),
+                                   _multipliers[j]->data(),
+                                   output_grad->data(),
+                                   input_grad->size(),
+                                   output_grad->size());
+            }
         }
 
-        auto grad = _gradients[_lvalue_indices[0]];
+        auto output_grad = _gradients[_lvalue_indices[0]];
         for (size_t j = 0; j < _last_op_indices[0]; j++)
-            cuda::fma(_gradients[_rvalue_indices[j]]->data(),
-                      _multipliers[j]->data(),
-                      grad->data(),
-                      grad->size());
+        {
+            auto input_grad = _gradients[_rvalue_indices[j]];
+            cuda::reverse_grad(input_grad->data(),
+                               _multipliers[j]->data(),
+                               output_grad->data(),
+                               input_grad->size(),
+                               output_grad->size());
+        }
     }
 
     template<typename T>

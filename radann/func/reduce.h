@@ -4,7 +4,7 @@
 #include "../core/array.h"
 #include "binary.h"
 
-namespace radann::functor
+namespace radann::func
 {
     struct sum
     {
@@ -18,10 +18,10 @@ namespace radann::functor
             return res;
         }
 
-        template<typename Arg, typename Mult>
-        auto accumulate_grad(const engine::expr<Arg> &arg, const engine::expr<Mult> &mult) const
+        template<size_t N, bool AD, typename T, typename Mult>
+        auto accumulate_grad(const array<N, AD, T> &arg, const expr::base<Mult> &mult) const
         {
-            return ;
+            return mult.self();
         }
     };
 

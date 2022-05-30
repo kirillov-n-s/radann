@@ -5,7 +5,7 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
-    auto x = radann::make_arithm(radann::make_shape(5), 1.f, 1.f);
+    /*auto x = radann::make_arithm(radann::make_shape(5), 1.f, 1.f);
     auto y = radann::make_arithm(radann::make_shape(5), 5.f, -1.f);
     auto z = radann::make_arithm(radann::make_shape(5), 1.f, 1.f);
 
@@ -13,6 +13,25 @@ int main()
     a.set_grad(radann::arithm(1.f, 1.f));
     radann::reverse();
     std::cout << x.get_grad() << y.get_grad() << z.get_grad();
+
+    radann::clear();*/
+
+    auto s = radann::make_shape(1);
+
+    auto x0 = radann::make_constant(s, 1.337f);
+    auto x1 = radann::make_constant(s, 1.488f);
+
+    auto y = radann::make_constant(s, 4.f);
+    auto z = radann::eval(2._fC * x0 + 3._fC * x1 * x1);
+    y *= radann::sin(z);
+
+    y.set_grad(2._fC);
+
+    radann::reverse();
+
+    std::cout << "x0 =\n" << x0 << "dx0 =\n" << x0.get_grad()
+              << "x1 =\n" << x1 << "dx1 =\n" << x1.get_grad()
+              << "y =\n" << y  << "dy =\n" << y.get_grad();
 
     radann::clear();
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "../cuda/random.h"
 
-namespace radann::functor
+namespace radann::func
 {
     template <typename T>
     class uniform

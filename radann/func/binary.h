@@ -1,7 +1,6 @@
 #pragma once
-#include "../core/unary.h"
 
-namespace radann::functor
+namespace radann::func
 {
     struct add
     {
@@ -13,17 +12,17 @@ namespace radann::functor
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return mult.self();
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return mult.self();
         }
@@ -39,17 +38,17 @@ namespace radann::functor
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return mult.self();
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return -mult;
         }
@@ -65,17 +64,17 @@ namespace radann::functor
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return rhs * mult;
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return lhs * mult;
         }
@@ -91,17 +90,17 @@ namespace radann::functor
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return mult / rhs;
         }
 
         template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const engine::expr<Lhs> &lhs,
-                                 const engine::expr<Rhs> &rhs,
-                                 const engine::expr<Mult> &mult) const
+        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
+                                 const expr::base<Rhs> &rhs,
+                                 const expr::base<Mult> &mult) const
         {
             return -lhs / radann::pow2(rhs) * mult;
         }

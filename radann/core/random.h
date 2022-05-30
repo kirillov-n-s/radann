@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
-#include "../engine/term.h"
-#include "../functor/random.h"
+#include "../expr/term.h"
+#include "../func/random.h"
 
 namespace radann
 {
@@ -17,12 +17,12 @@ namespace radann
     template<typename T>
     inline auto uniform(unsigned int seed)
     {
-        return engine::make_term(functor::uniform<T> { seed });
+        return expr::make_term(func::uniform<T> {seed });
     }
 
     template<typename T>
     inline auto normal(unsigned int seed)
     {
-        return engine::make_term(functor::normal<T> { seed });
+        return expr::make_term(func::normal<T> {seed });
     }
 }

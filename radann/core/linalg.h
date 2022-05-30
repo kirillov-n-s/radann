@@ -1,67 +1,66 @@
 #pragma once
-#include "../engine/unary_eager.h"
-#include "../engine/binary_eager.h"
-#include "../functor/linalg.h"
+#include "../expr/eager.h"
+#include "../func/linalg.h"
 
 namespace radann
 {
     template <typename Lhs, typename Rhs>
-    inline auto dot(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto dot(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto outer(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto outer(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto matmul(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <bool LTrans, typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto matmul(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>&, const engine::expr<Rhs>&);
+    inline auto matmul(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     template <typename Arg>
-    inline auto transpose(const engine::expr<Arg>&);
+    inline auto transpose(const expr::base<Arg>&);
 
     /*template <typename Arg>
-    inline auto inverse(const engine::expr<Arg>&);*/
+    inline auto inverse(const expr::base<Arg>&);*/
 }
 
 namespace radann
 {
     template <typename Lhs, typename Rhs>
-    inline auto dot(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    inline auto dot(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
-        return engine::make_eager(functor::dot{}, lhs, rhs).result();
+        return expr::make_eager(func::dot{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto outer(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    inline auto outer(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
-        return engine::make_eager(functor::outer{}, lhs, rhs).result();
+        return expr::make_eager(func::outer{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    inline auto matmul(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
-        return engine::make_eager(functor::matmul<false, false>{}, lhs, rhs).result();
+        return expr::make_eager(func::matmul<false, false>{}, lhs, rhs);
     }
 
     template <bool LTrans, typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    inline auto matmul(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
-        return engine::make_eager(functor::matmul<LTrans, false>{}, lhs, rhs).result();
+        return expr::make_eager(func::matmul<LTrans, false>{}, lhs, rhs);
     }
 
     template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
-    inline auto matmul(const engine::expr<Lhs>& lhs, const engine::expr<Rhs>& rhs)
+    inline auto matmul(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
-        return engine::make_eager(functor::matmul<LTrans, RTrans>{}, lhs, rhs).result();
+        return expr::make_eager(func::matmul<LTrans, RTrans>{}, lhs, rhs);
     }
 
     template <typename Arg>
-    inline auto transpose(const engine::expr<Arg>& arg)
+    inline auto transpose(const expr::base<Arg>& arg)
     {
-        return engine::make_eager(functor::trans{}, arg).result();
+        return expr::make_eager(func::trans{}, arg);
     }
 }

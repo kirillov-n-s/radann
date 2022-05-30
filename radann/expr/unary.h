@@ -1,10 +1,10 @@
 #pragma once
 #include "access.h"
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Op, typename Arg>
-    class unary_lazy : public expr<unary_lazy<Op, Arg>>
+    class unary : public base<unary<Op, Arg>>
     {
     public:
         using value_type = typename Arg::value_type;
@@ -16,7 +16,7 @@ namespace radann::engine
         Op _op;
         Arg _arg;
 
-        unary_lazy(const Op&, const Arg&);
+        unary(const Op&, const Arg&);
 
     public:
         __host__ __device__ inline
@@ -26,49 +26,49 @@ namespace radann::engine
         auto shape(size_t) const;
 
         template<typename Expr>
-        void propagate_grad(const expr<Expr>&) const;
+        void propagate_grad(const base<Expr>&) const;
 
         template<typename Op, typename Arg>
-        friend inline auto make_lazy(const Op&, const expr<Arg>&);
+        friend inline auto make_lazy(const Op&, const base<Arg>&);
     };
 }
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Op, typename Arg>
-    unary_lazy<Op, Arg>::unary_lazy(const Op &op, const Arg &arg)
+    unary<Op, Arg>::unary(const Op &op, const Arg &arg)
         : _op(op), _arg(arg) {}
 
     template<typename Op, typename Arg>
     __host__ __device__
-    typename unary_lazy<Op, Arg>::value_type unary_lazy<Op, Arg>::operator[](size_t i) const
+    typename unary<Op, Arg>::value_type unary<Op, Arg>::operator[](size_t i) const
     {
         return _op(_arg[i]);
     }
 
     template<typename Op, typename Arg>
-    auto unary_lazy<Op, Arg>::shape() const
+    auto unary<Op, Arg>::shape() const
     {
         return _arg.shape();
     }
 
     template<typename Op, typename Arg>
-    auto unary_lazy<Op, Arg>::shape(size_t i) const
+    auto unary<Op, Arg>::shape(size_t i) const
     {
         return _arg.shape(i);
     }
 
     template<typename Op, typename Arg>
     template<typename Expr>
-    void unary_lazy<Op, Arg>::propagate_grad(const expr<Expr> &mult) const
+    void unary<Op, Arg>::propagate_grad(const base<Expr> &mult) const
     {
         if constexpr (Arg::is_autodiff)
             _arg.propagate_grad(_op.accumulate_grad(_arg, mult));
     }
 
     template<typename Op, typename Arg>
-    inline auto make_lazy(const Op& op, const expr<Arg>& arg)
+    inline auto make_lazy(const Op& op, const base<Arg>& arg)
     {
-        return unary_lazy {op, get_access(arg.self()) };
+        return unary {op, get_access(arg.self()) };
     }
 }

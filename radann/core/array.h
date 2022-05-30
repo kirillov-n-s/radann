@@ -3,15 +3,15 @@
 #include "default.h"
 #include "shape.h"
 #include "../cuda/assign.h"
-#include "../engine/access.h"
-#include "../engine/tape_context.h"
+#include "../expr/access.h"
+#include "../expr/tape_context.h"
 #include "sequence.h"
 
 namespace radann
 {
     template<size_t N, bool AD = autodiff, typename T = real>
     class array :
-            public engine::expr<array<N, AD, T>>,
+            public expr::base<array<N, AD, T>>,
             public cuda::shared_array<T>
     {
     public:
@@ -36,9 +36,9 @@ namespace radann
         array(const array&);
 
         template<typename Expr>
-        array(const radann::shape<N>&, const engine::expr<Expr>&);
+        array(const radann::shape<N>&, const expr::base<Expr>&);
         template<typename Expr>
-        array(const engine::expr<Expr>&);
+        array(const expr::base<Expr>&);
 
         ~array() = default;
 
@@ -47,16 +47,16 @@ namespace radann
         array& operator=(const std::initializer_list<T>&);
 
         template<typename Expr>
-        array& operator=(const engine::expr<Expr>&);
+        array& operator=(const expr::base<Expr>&);
         array& operator=(const array&);
         template<typename Expr>
-        array& operator+=(const engine::expr<Expr>&);
+        array& operator+=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator-=(const engine::expr<Expr>&);
+        array& operator-=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator*=(const engine::expr<Expr>&);
+        array& operator*=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator/=(const engine::expr<Expr>&);
+        array& operator/=(const expr::base<Expr>&);
 
         array& operator>>=(const array&);
 
@@ -76,12 +76,12 @@ namespace radann
         size_t grad_index() const;
         array<N, false, T> get_grad() const;
         template<typename Expr>
-        void set_grad(const engine::expr<Expr>&) const;
+        void set_grad(const expr::base<Expr>&) const;
     };
 
     template<size_t N, typename T>
     class array<N, false, T> :
-            public engine::expr<array<N, false, T>>,
+            public expr::base<array<N, false, T>>,
             public cuda::shared_array<T>
     {
     public:
@@ -105,9 +105,9 @@ namespace radann
         array(const array&);
 
         template<typename Expr>
-        array(const radann::shape<N>&, const engine::expr<Expr>&);
+        array(const radann::shape<N>&, const expr::base<Expr>&);
         template<typename Expr>
-        array(const engine::expr<Expr>&);
+        array(const expr::base<Expr>&);
 
         ~array() = default;
 
@@ -116,16 +116,16 @@ namespace radann
         array& operator=(const std::initializer_list<T>&);
 
         template<typename Expr>
-        array& operator=(const engine::expr<Expr>&);
+        array& operator=(const expr::base<Expr>&);
         array& operator=(const array&);
         template<typename Expr>
-        array& operator+=(const engine::expr<Expr>&);
+        array& operator+=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator-=(const engine::expr<Expr>&);
+        array& operator-=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator*=(const engine::expr<Expr>&);
+        array& operator*=(const expr::base<Expr>&);
         template<typename Expr>
-        array& operator/=(const engine::expr<Expr>&);
+        array& operator/=(const expr::base<Expr>&);
 
         array& operator>>=(const array&);
 
@@ -152,14 +152,14 @@ namespace radann
     inline auto make_array(const radann::shape<N>&, const std::initializer_list<T>&);
 
     template <typename Expr, size_t N>
-    inline auto make_array(const shape<N>&, const engine::expr<Expr>&);
+    inline auto make_array(const shape<N>&, const expr::base<Expr>&);
     template <typename Expr>
-    inline auto make_array(const engine::expr<Expr>&);
+    inline auto make_array(const expr::base<Expr>&);
 
     template <bool AD, typename Expr, size_t N>
-    inline auto make_array(const shape<N>&, const engine::expr<Expr>&);
+    inline auto make_array(const shape<N>&, const expr::base<Expr>&);
     template <bool AD, typename Expr>
-    inline auto make_array(const engine::expr<Expr>&);
+    inline auto make_array(const expr::base<Expr>&);
 
     template<size_t N, bool AD, typename T>
     std::ostream& operator<<(std::ostream&, const array<N, AD, T>&);
@@ -171,7 +171,7 @@ namespace radann
     array<N, AD, T>::array(const T *device_ptr, const radann::shape<N> &shape)
         : cuda::shared_array<T>(device_ptr, shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
+          _grad_index(expr::get_tape<T>()->create_grad(shape.length()))
     {}
 
     template<size_t N, typename T>
@@ -186,7 +186,7 @@ namespace radann
         : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape),
           _grad_index(derive
-                      ? engine::get_tape<T>()->derive_grad(base_index, shape.length(), offset)
+                      ? expr::get_tape<T>()->derive_grad(base_index, shape.length(), offset)
                       : base_index)
     {}
 
@@ -200,7 +200,7 @@ namespace radann
     array<N, AD, T>::array(const radann::shape<N> &shape)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
+          _grad_index(expr::get_tape<T>()->create_grad(shape.length()))
     {}
 
     template<size_t N, typename T>
@@ -214,7 +214,7 @@ namespace radann
     array<N, AD, T>::array(const radann::shape<N> &shape, InputIterator first, InputIterator last)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
+          _grad_index(expr::get_tape<T>()->create_grad(shape.length()))
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
@@ -256,40 +256,40 @@ namespace radann
         : array(other._storage, other._shape, other._offset)
     {}
 
-    //todo: if expr is ad, compute get_grad of rvalue & push lvalue, do nothing otherwise
+    //todo: if base is ad, compute get_grad of rvalue & push lvalue, do nothing otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T>::array(const radann::shape<N> &shape, const engine::expr<Expr> &expr)
+    array<N, AD, T>::array(const radann::shape<N> &shape, const expr::base<Expr> &expr)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
-          _grad_index(engine::get_tape<T>()->create_grad(shape.length()))
+          _grad_index(expr::get_tape<T>()->create_grad(shape.length()))
     {
-        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+        cuda::assign(this->data(), this->_size, expr::get_access(expr.self()));
         if constexpr(Expr::is_autodiff)
         {
             expr.self().propagate_grad(constant<T>(1));
-            engine::get_tape<T>()->push_lvalue(_grad_index);
+            expr::get_tape<T>()->push_lvalue(_grad_index);
         }
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T>::array(const radann::shape<N> &shape, const engine::expr<Expr> &expr)
+    array<N, false, T>::array(const radann::shape<N> &shape, const expr::base<Expr> &expr)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape)
     {
-        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+        cuda::assign(this->data(), this->_size, expr::get_access(expr.self()));
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T>::array(const engine::expr<Expr> &expr)
+    array<N, AD, T>::array(const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T>::array(const engine::expr<Expr> &expr)
+    array<N, false, T>::array(const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
 
@@ -330,20 +330,25 @@ namespace radann
         return assign(data.begin(), data.end());
     }
 
-    //todo: if expr is ad, compute grad of rvalue & push lvalue, probably clear get_grad data otherwise
+    //todo: if base is ad, compute grad of rvalue & push lvalue, probably clear get_grad data otherwise
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T> &array<N, AD, T>::operator=(const engine::expr<Expr> &expr)
+    array<N, AD, T> &array<N, AD, T>::operator=(const expr::base<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+        cuda::assign(this->data(), this->_size, expr::get_access(expr.self()));
+        if constexpr(Expr::is_autodiff)
+        {
+            expr.self().propagate_grad(constant<T>(1));
+            expr::get_tape<T>()->push_lvalue(_grad_index);
+        }
         return *this;
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T> &array<N, false, T>::operator=(const engine::expr<Expr> &expr)
+    array<N, false, T> &array<N, false, T>::operator=(const expr::base<Expr> &expr)
     {
-        cuda::assign(this->data(), this->_size, engine::get_access(expr.self()));
+        cuda::assign(this->data(), this->_size, expr::get_access(expr.self()));
         return *this;
     }
 
@@ -352,7 +357,7 @@ namespace radann
     {
         if (this == &other)
             return *this;
-        return (*this = engine::get_access(other));
+        return (*this = expr::get_access(other));
     }
 
     template<size_t N, typename T>
@@ -360,61 +365,61 @@ namespace radann
     {
         if (this == &other)
             return *this;
-        return (*this = engine::get_access(other));
+        return (*this = expr::get_access(other));
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T> &array<N, AD, T>::operator+=(const engine::expr<Expr> &expr)
+    array<N, AD, T> &array<N, AD, T>::operator+=(const expr::base<Expr> &expr)
     {
         return (*this = *this + expr);
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T> &array<N, false, T>::operator+=(const engine::expr<Expr> &expr)
+    array<N, false, T> &array<N, false, T>::operator+=(const expr::base<Expr> &expr)
     {
         return (*this = *this + expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T> &array<N, AD, T>::operator-=(const engine::expr<Expr> &expr)
+    array<N, AD, T> &array<N, AD, T>::operator-=(const expr::base<Expr> &expr)
     {
         return (*this = *this - expr);
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T> &array<N, false, T>::operator-=(const engine::expr<Expr> &expr)
+    array<N, false, T> &array<N, false, T>::operator-=(const expr::base<Expr> &expr)
     {
         return (*this = *this - expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T> &array<N, AD, T>::operator*=(const engine::expr<Expr> &expr)
+    array<N, AD, T> &array<N, AD, T>::operator*=(const expr::base<Expr> &expr)
     {
         return (*this = *this * expr);
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T> &array<N, false, T>::operator*=(const engine::expr<Expr> &expr)
+    array<N, false, T> &array<N, false, T>::operator*=(const expr::base<Expr> &expr)
     {
         return (*this = *this * expr);
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    array<N, AD, T> &array<N, AD, T>::operator/=(const engine::expr<Expr> &expr)
+    array<N, AD, T> &array<N, AD, T>::operator/=(const expr::base<Expr> &expr)
     {
         return (*this = *this / expr);
     }
 
     template<size_t N, typename T>
     template<typename Expr>
-    array<N, false, T> &array<N, false, T>::operator/=(const engine::expr<Expr> &expr)
+    array<N, false, T> &array<N, false, T>::operator/=(const expr::base<Expr> &expr)
     {
         return (*this = *this / expr);
     }
@@ -543,14 +548,14 @@ namespace radann
     template<size_t N, bool AD, typename T>
     array<N, false, T> array<N, AD, T>::get_grad() const
     {
-        return array<N, false, T> { engine::get_tape<T>()->get_grad(_grad_index), _shape };
+        return array<N, false, T> {expr::get_tape<T>()->get_grad(_grad_index), _shape };
     }
 
     template<size_t N, bool AD, typename T>
     template<typename Expr>
-    void array<N, AD, T>::set_grad(const engine::expr<Expr> &expr) const
+    void array<N, AD, T>::set_grad(const expr::base<Expr> &expr) const
     {
-        engine::get_tape<T>()->set_grad(_grad_index, expr);
+        expr::get_tape<T>()->set_grad(_grad_index, expr);
     }
 
     template<bool AD, typename T, size_t N>
@@ -572,25 +577,25 @@ namespace radann
     }
 
     template<typename Expr, size_t N>
-    inline auto make_array(const shape<N>& shape, const engine::expr<Expr>& expr)
+    inline auto make_array(const shape<N>& shape, const expr::base<Expr>& expr)
     {
         return array<N, Expr::is_autodiff, typename Expr::value_type> { shape, expr };
     }
 
     template<typename Expr>
-    inline auto make_array(const engine::expr<Expr>& expr)
+    inline auto make_array(const expr::base<Expr>& expr)
     {
         return array<Expr::rank, Expr::is_autodiff, typename Expr::value_type> { expr.self().shape(), expr };
     }
 
     template<bool AD, typename Expr, size_t N>
-    inline auto make_array(const shape<N>& shape, const engine::expr<Expr>& expr)
+    inline auto make_array(const shape<N>& shape, const expr::base<Expr>& expr)
     {
         return array<N, AD, typename Expr::value_type> { shape, expr };
     }
 
     template<bool AD, typename Expr>
-    inline auto make_array(const engine::expr<Expr>& expr)
+    inline auto make_array(const expr::base<Expr>& expr)
     {
         return array<Expr::rank, AD, typename Expr::value_type> { expr.self().shape(), expr };
     }

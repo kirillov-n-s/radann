@@ -1,10 +1,10 @@
 #pragma once
-#include "expr.h"
+#include "base.h"
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Seq>
-    class term : public expr<term<Seq>>
+    class term : public base<term<Seq>>
     {
     public:
         using value_type = typename Seq::value_type;
@@ -29,7 +29,7 @@ namespace radann::engine
     };
 }
 
-namespace radann::engine
+namespace radann::expr
 {
     template<typename Seq>
     term<Seq>::term(const Seq &seq)
