@@ -1,119 +1,85 @@
 #pragma once
 #include "base.h"
-#include "tape_context.h"
+#include "../diff/tape_context.h"
 
 namespace radann::expr
 {
-    template<size_t N, bool AD, typename T>
-    class access : public base<access<N, AD, T>>
+    template<typename T>
+    class access : public base<access<T>>
     {
     public:
         using value_type = T;
-        static constexpr size_t rank = N;
         static constexpr bool is_expr = true;
-        static constexpr bool is_autodiff = AD;
 
     private:
         const T* _data;
         size_t _size;
-        shape<N> _shape;
-        size_t _grad_index;
+        shape _shape;
+        std::optional<size_t> _grad_index;
+
+        access(const T*, size_t, const shape&, const std::optional<size_t>&);
 
     public:
-        access(const T*, size_t, const shape<N>&, size_t);
-
         __host__ __device__ inline
         T operator[](size_t i) const;
 
+        size_t rank() const;
         auto shape() const;
         size_t shape(size_t) const;
 
+        bool ad() const;
         template<typename Expr>
         void propagate_grad(const base<Expr>&) const;
+
+        template<typename Expr>
+        friend inline auto get_access(const Expr&);
     };
-
-    template<size_t N, typename T>
-    class access<N, false, T> : public base<access<N, false, T>>
-    {
-    public:
-        using value_type = T;
-        static constexpr size_t rank = N;
-        static constexpr bool is_expr = true;
-        static constexpr bool is_autodiff = false;
-
-    private:
-        const T* _data;
-        size_t _size;
-        shape<N> _shape;
-
-    public:
-        access(const T*, size_t, const shape<N>&);
-
-        __host__ __device__ inline
-        T operator[](size_t i) const;
-
-        auto shape() const;
-        size_t shape(size_t) const;
-    };
-
-    template<typename Expr>
-    inline auto get_access(const Expr&);
 }
 
 namespace radann::expr
 {
-    template<size_t N, bool AD, typename T>
-    access<N, AD, T>::access(const T *data, size_t size, const radann::shape<N> &shape, size_t grad_index)
+    template<typename T>
+    access<T>::access(const T *data, size_t size, const radann::shape &shape, const std::optional<size_t> &grad_index)
         : _data(data), _size(size), _shape(shape), _grad_index(grad_index)
     {}
-
-    template<size_t N, typename T>
-    access<N, false, T>::access(const T *data, size_t size, const radann::shape<N> &shape)
-        : _data(data), _size(size), _shape(shape)
-    {}
-
-    template<size_t N, bool AD, typename T>
+    
+    template<typename T>
     __host__ __device__
-    T access<N, AD, T>::operator[](size_t i) const
+    T access<T>::operator[](size_t i) const
     {
         return _data[i % _size];
     }
 
-    template<size_t N, typename T>
-    __host__ __device__
-    T access<N, false, T>::operator[](size_t i) const
+    template<typename T>
+    size_t access<T>::rank() const
     {
-        return _data[i % _size];
+        return _shape.rank();
     }
 
-    template<size_t N, bool AD, typename T>
-    auto access<N, AD, T>::shape() const
-    {
-        return _shape;
-    }
-
-    template<size_t N, typename T>
-    auto access<N, false, T>::shape() const
+    template<typename T>
+    auto access<T>::shape() const
     {
         return _shape;
     }
 
-    template<size_t N, bool AD, typename T>
-    size_t access<N, AD, T>::shape(size_t i) const
+    template<typename T>
+    size_t access<T>::shape(size_t i) const
     {
         return _shape[i];
     }
 
-    template<size_t N, typename T>
-    size_t access<N, false, T>::shape(size_t i) const
+    template<typename T>
+    bool access<T>::ad() const
     {
-        return _shape[i];
+        return _grad_index.has_value();
     }
 
-    template<size_t N, bool AD, typename T>
+    template<typename T>
     template<typename Expr>
-    void access<N, AD, T>::propagate_grad(const base<Expr> &mult) const
+    void access<T>::propagate_grad(const base<Expr> &mult) const
     {
+        if (!ad())
+            throw std::runtime_error("Accessed array is not differentiated.");
         get_tape<T>()->push_rvalue(_grad_index, mult);
     }
 
@@ -123,13 +89,7 @@ namespace radann::expr
         if constexpr(Expr::is_expr)
             return expr;
         else
-        {
-            if constexpr(Expr::is_autodiff)
-                return access<Expr::rank, true, typename Expr::value_type>
-                        {expr.data(), expr.size(), expr.shape(), expr.grad_index()};
-            else
-                return access<Expr::rank, false, typename Expr::value_type>
-                        {expr.data(), expr.size(), expr.shape()};
-        }
+            return access<typename Expr::value_type>
+                    { expr.data(), expr.size(), expr.shape(), expr.grad_index() };
     }
 }

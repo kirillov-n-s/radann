@@ -1,5 +1,6 @@
 #pragma once
 #include "access.h"
+#include "../diff/grad_binary.h"
 
 namespace radann::expr
 {
@@ -8,9 +9,7 @@ namespace radann::expr
     {
     public:
         using value_type = std::common_type_t<typename Lhs::value_type, typename Rhs::value_type>;
-        static constexpr size_t rank = std::max(Lhs::rank, Rhs::rank);
         static constexpr bool is_expr = true;
-        static constexpr bool is_autodiff = Lhs::is_autodiff || Rhs::is_autodiff;
 
     private:
         Op _op;
@@ -23,14 +22,16 @@ namespace radann::expr
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
+        size_t rank() const;
         auto shape() const;
         size_t shape(size_t) const;
 
+        bool ad() const;
         template<typename Expr>
         void propagate_grad(const base<Expr>&) const;
 
         template<typename Op, typename Lhs, typename Rhs>
-        friend inline auto make_lazy(const Op&, const base<Lhs>&, const base<Rhs>&);
+        friend inline auto make_expr(const Op&, const base<Lhs>&, const base<Rhs>&);
     };
 }
 
@@ -48,32 +49,43 @@ namespace radann::expr
     }
 
     template<typename Op, typename Lhs, typename Rhs>
+    size_t binary<Op, Lhs, Rhs>::rank() const
+    {
+        auto l = _lhs.rank();
+        auto r = _rhs.rank();
+        return l > r ? l : r;
+    }
+
+    template<typename Op, typename Lhs, typename Rhs>
     auto binary<Op, Lhs, Rhs>::shape() const
     {
-        if constexpr(Lhs::rank > Rhs::rank)
-            return _lhs.shape();
-        else
-            return _rhs.shape();
+        return _lhs.rank() > _rhs.rank() ? _lhs.shape() : _rhs.shape();
     }
 
     template<typename Op, typename Lhs, typename Rhs>
     size_t binary<Op, Lhs, Rhs>::shape(size_t i) const
     {
-        return (Lhs::rank > Rhs::rank) ? _lhs.shape(i) : _rhs.shape(i);
+        return _lhs.rank() > _rhs.rank() ? _lhs.shape(i) : _rhs.shape(i);
+    }
+
+    template<typename Op, typename Lhs, typename Rhs>
+    bool binary<Op, Lhs, Rhs>::ad() const
+    {
+        return _lhs.ad() || _rhs.ad();
     }
 
     template<typename Op, typename Lhs, typename Rhs>
     template<typename Expr>
     void binary<Op, Lhs, Rhs>::propagate_grad(const base<Expr> &mult) const
     {
-        if constexpr (Lhs::is_autodiff)
-            _lhs.propagate_grad(_op.accumulate_grad_lhs(_lhs, _rhs, mult));
-        if constexpr (Rhs::is_autodiff)
-            _rhs.propagate_grad(_op.accumulate_grad_rhs(_lhs, _rhs, mult));
+        if (_lhs.ad())
+            _lhs.propagate_grad(diff::grad_lhs<Op>{}(_lhs, _rhs, mult));
+        if (_rhs.ad())
+            _rhs.propagate_grad(diff::grad_rhs<Op>{}(_lhs, _rhs, mult));
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    inline auto make_lazy(const Op& op, const base<Lhs>& lhs, const base<Rhs>& rhs)
+    inline auto make_expr(const Op& op, const base<Lhs>& lhs, const base<Rhs>& rhs)
     {
         return binary {op, get_access(lhs.self()), get_access(rhs.self()) };
     }

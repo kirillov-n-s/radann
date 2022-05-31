@@ -1,11 +1,15 @@
 #pragma once
 #include <vector>
-#include <list>
-#include "../cuda/shared_array.h"
-#include "../cuda/unique_array.h"
-#include "../cuda/assign.h"
+#include "../expr/base.h"
+//#include "../core/array.h"
 
-namespace radann::expr
+namespace radann
+{
+    template<typename T = real>
+    class array;
+}
+
+namespace radann::diff
 {
     template<typename T>
     class tape_context;
@@ -17,10 +21,10 @@ namespace radann::expr
         std::vector<size_t> _lvalue_indices;
         std::vector<size_t> _last_op_indices;
 
-        std::vector<cuda::unique_array<T>*> _multipliers;
+        std::vector<radann::array<T>*> _multipliers;
         std::vector<size_t> _rvalue_indices;
 
-        std::vector<cuda::shared_array<T>*> _gradients;
+        std::vector<radann::array<T>> _gradients;
 
         size_t _next_index = 0;
 
@@ -37,10 +41,10 @@ namespace radann::expr
 
         const T* get_grad(size_t) const;
         template<typename Expr>
-        void set_grad(size_t, const base<Expr>&);
+        void set_grad(size_t, const expr::base<Expr>&);
 
         template<typename Expr>
-        void push_rvalue(size_t, const base<Expr>&);
+        void push_rvalue(size_t, const expr::base<Expr>&);
         void push_lvalue(size_t);
 
         void reverse();
@@ -48,7 +52,7 @@ namespace radann::expr
     };
 }
 
-namespace radann::expr
+namespace radann::diff
 {
     template<typename T>
     size_t tape<T>::push_grad(cuda::shared_array<T> *grad)
@@ -77,7 +81,7 @@ namespace radann::expr
 
     template<typename T>
     template<typename Expr>
-    void tape<T>::set_grad(size_t index, const base<Expr> &grad)
+    void tape<T>::set_grad(size_t index, const expr::base<Expr> &grad)
     {
         auto grad_array = _gradients[index];
         cuda::assign(grad_array->data(), grad_array->size(), grad.self());
@@ -85,7 +89,7 @@ namespace radann::expr
 
     template<typename T>
     template<typename Expr>
-    void tape<T>::push_rvalue(size_t index, const base<Expr> &mult)
+    void tape<T>::push_rvalue(size_t index, const expr::base<Expr> &mult)
     {
         auto size = _gradients[index]->size();
         auto array = new cuda::unique_array<T> { size };

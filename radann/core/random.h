@@ -17,12 +17,12 @@ namespace radann
     template<typename T>
     inline auto uniform(unsigned int seed)
     {
-        return expr::make_term(func::uniform<T> {seed });
+        return expr::make_expr(func::uniform<T>{seed});
     }
 
     template<typename T>
     inline auto normal(unsigned int seed)
     {
-        return expr::make_term(func::normal<T> {seed });
+        return expr::make_expr(func::normal<T>{seed});
     }
 }

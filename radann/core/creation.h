@@ -5,56 +5,56 @@
 
 namespace radann
 {
-    template <bool AD = autodiff, typename T, size_t N>
-    inline auto make_constant(const shape<N>&, T);
-    template <bool AD = autodiff, typename T = real, size_t N>
-    inline auto make_ones(const shape<N>&);
-    template <bool AD = autodiff, typename T, size_t N>
-    inline auto make_arithm(const shape<N>&, T, T);
-    template <bool AD = autodiff, typename T, size_t N>
-    inline auto make_geom(const shape<N>&, T, T);
+    template <typename T>
+    inline auto make_constant(const shape&, T, bool = autodiff);
+    template <typename T = real>
+    inline auto make_ones(const shape&, bool = autodiff);
+    template <typename T>
+    inline auto make_arithm(const shape&, T, T, bool = autodiff);
+    template <typename T>
+    inline auto make_geom(const shape&, T, T, bool = autodiff);
 
-    template <bool AD = autodiff, typename T = real, size_t N>
-    inline auto make_uniform(const shape<N>&, unsigned int = std::random_device{}());
-    template <bool AD = autodiff, typename T = real, size_t N>
-    inline auto make_normal(const shape<N>&, unsigned int = std::random_device{}());
+    template <typename T = real>
+    inline auto make_uniform(const shape&, bool = autodiff, unsigned int = std::random_device{}());
+    template <typename T = real>
+    inline auto make_normal(const shape&, bool = autodiff, unsigned int = std::random_device{}());
 }
 
 namespace radann
 {
-    template <bool AD, typename T, size_t N>
-    inline auto make_constant(const shape<N>& shape, T value)
+    template <typename T>
+    inline auto make_constant(const shape& shape, T value, bool ad)
     {
-        return array<N, AD, T> { shape, constant(value) };
+        return array<T> { shape, constant(value), ad };
     }
 
-    template <bool AD, typename T, size_t N>
-    inline auto make_ones(const shape<N>& shape)
+    template <typename T>
+    inline auto make_ones(const shape& shape, bool ad)
     {
-        return array<N, AD, T> { shape, constant<T>(1) };
+        return array<T> { shape, constant<T>(1), ad };
     }
 
-    template <bool AD, typename T, size_t N>
-    inline auto make_arithm(const shape<N>& shape, T offset, T step)
+    template <typename T>
+    inline auto make_arithm(const shape& shape, T offset, T step, bool ad)
     {
-        return array<N, AD, T> { shape, arithm(offset, step) };
+        return array<T> { shape, arithm(offset, step), ad };
     }
 
-    template <bool AD, typename T, size_t N>
-    inline auto make_geom(const shape<N>& shape, T scale, T ratio)
+    template <typename T>
+    inline auto make_geom(const shape& shape, T scale, T ratio, bool ad)
     {
-        return array<N, AD, T> { shape, geom(scale, ratio) };
+        return array<T> { shape, geom(scale, ratio), ad };
     }
 
-    template <bool AD, typename T, size_t N>
-    inline auto make_uniform(const shape<N>& shape, unsigned int seed)
+    template <typename T>
+    inline auto make_uniform(const shape& shape, bool ad, unsigned int seed)
     {
-        return array<N, AD, T> { shape, uniform<T>(seed) };
+        return array<T> { shape, uniform<T>(seed), ad };
     }
 
-    template <bool AD, typename T, size_t N>
-    inline auto make_normal(const shape<N>& shape, unsigned int seed)
+    template <typename T>
+    inline auto make_normal(const shape& shape, bool ad, unsigned int seed)
     {
-        return array<N, AD, T> { shape, normal<T>(seed) };
+        return array<T> { shape, normal<T>(seed), ad };
     }
 }

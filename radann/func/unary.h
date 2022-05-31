@@ -10,12 +10,6 @@ namespace radann::func
         {
             return -x;
         }
-
-        template<typename Arg, typename Mult>
-        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
-        {
-            return -mult;
-        }
     };
 
     struct abs
@@ -55,12 +49,6 @@ namespace radann::func
 		T operator()(T x) const
         {
             return ::sin(x);
-        }
-
-        template<typename Arg, typename Mult>
-        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
-        {
-            return radann::cos(arg) * mult;
         }
     };
 
@@ -222,12 +210,6 @@ namespace radann::func
         {
             return ::log(x);
         }
-
-        template<typename Arg, typename Mult>
-        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
-        {
-            return mult / arg;
-        }
     };
 
     struct log2
@@ -287,12 +269,6 @@ namespace radann::func
         T operator()(T x) const
         {
             return x * x;
-        }
-
-        template<typename Arg, typename Mult>
-        auto accumulate_grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
-        {
-            return radann::constant<typename Arg::value_type>(2) * arg * mult;
         }
     };
 }

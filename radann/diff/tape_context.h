@@ -1,7 +1,7 @@
 #pragma once
 #include "tape.h"
 
-namespace radann::expr
+namespace radann::diff
 {
     template<typename T>
     class tape_context
@@ -19,7 +19,7 @@ namespace radann::expr
     };
 }
 
-namespace radann::expr
+namespace radann::diff
 {
     template<typename T>
     tape_context<T>::tape_context()

@@ -23,7 +23,7 @@ namespace radann
     template<typename T>
     inline auto constant(T value)
     {
-        return expr::make_term(func::constant <T> {value});
+        return expr::make_expr(func::constant<T>{value});
     }
 
     inline auto operator""_C(long double value)
@@ -39,12 +39,12 @@ namespace radann
     template<typename T>
     inline auto arithm(T offset, T step)
     {
-        return expr::make_term(func::arithm<T>(offset, step));
+        return expr::make_expr(func::arithm<T>(offset, step));
     }
 
     template<typename T>
     inline auto geom(T scale, T ratio)
     {
-        return expr::make_term(func::geom<T>(scale, ratio));
+        return expr::make_expr(func::geom<T>(scale, ratio));
     }
 }

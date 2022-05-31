@@ -10,22 +10,6 @@ namespace radann::func
         {
             return x + y;
         }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
     };
 
     struct sub
@@ -35,22 +19,6 @@ namespace radann::func
 		T operator()(T x, T y) const
         {
             return x - y;
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return -mult;
         }
     };
 
@@ -62,22 +30,6 @@ namespace radann::func
         {
             return x * y;
         }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return rhs * mult;
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return lhs * mult;
-        }
     };
 
     struct div
@@ -87,22 +39,6 @@ namespace radann::func
 		T operator()(T x, T y) const
         {
             return x / y;
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult / rhs;
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return -lhs / radann::pow2(rhs) * mult;
         }
     };
 

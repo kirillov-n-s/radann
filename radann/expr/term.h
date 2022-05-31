@@ -8,9 +8,7 @@ namespace radann::expr
     {
     public:
         using value_type = typename Seq::value_type;
-        static constexpr size_t rank = 0;
         static constexpr bool is_expr = true;
-        static constexpr bool is_autodiff = false;
 
     private:
         Seq _seq;
@@ -21,11 +19,14 @@ namespace radann::expr
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
+        size_t rank() const;
         auto shape() const;
         auto shape(size_t) const;
 
+        bool ad() const;
+
         template<typename Seq>
-        friend inline auto make_term(const Seq&);
+        friend inline auto make_expr(const Seq&);
     };
 }
 
@@ -43,22 +44,32 @@ namespace radann::expr
     }
 
     template<typename Seq>
+    size_t term<Seq>::rank() const
+    {
+        return 0;
+    }
+
+    template<typename Seq>
     auto term<Seq>::shape() const
     {
         return make_shape();
     }
 
     template<typename Seq>
-    auto term<Seq>::shape(size_t i) const
+    auto term<Seq>::shape(size_t) const
     {
-        return make_shape()[i];
+        throw std::invalid_argument("Index out of bounds.");
     }
 
     template<typename Seq>
-    inline auto make_term(const Seq &seq)
+    inline auto make_expr(const Seq &seq)
     {
         return term { seq };
     }
 
-
+    template<typename Seq>
+    bool term<Seq>::ad() const
+    {
+        return false;
+    }
 }

@@ -8,9 +8,7 @@ namespace radann::expr
     {
     public:
         using value_type = typename Arg::value_type;
-        static constexpr size_t rank = Arg::rank;
         static constexpr bool is_expr = true;
-        static constexpr bool is_autodiff = Arg::is_autodiff;
 
     private:
         Op _op;
@@ -22,14 +20,16 @@ namespace radann::expr
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
+        size_t rank() const;
         auto shape() const;
         auto shape(size_t) const;
 
+        bool ad() const;
         template<typename Expr>
         void propagate_grad(const base<Expr>&) const;
 
         template<typename Op, typename Arg>
-        friend inline auto make_lazy(const Op&, const base<Arg>&);
+        friend inline auto make_expr(const Op&, const base<Arg>&);
     };
 }
 
@@ -47,6 +47,12 @@ namespace radann::expr
     }
 
     template<typename Op, typename Arg>
+    size_t unary<Op, Arg>::rank() const
+    {
+        return _arg.rank();
+    }
+
+    template<typename Op, typename Arg>
     auto unary<Op, Arg>::shape() const
     {
         return _arg.shape();
@@ -59,6 +65,12 @@ namespace radann::expr
     }
 
     template<typename Op, typename Arg>
+    bool unary<Op, Arg>::ad() const
+    {
+        return _arg.ad();
+    }
+
+    template<typename Op, typename Arg>
     template<typename Expr>
     void unary<Op, Arg>::propagate_grad(const base<Expr> &mult) const
     {
@@ -67,7 +79,7 @@ namespace radann::expr
     }
 
     template<typename Op, typename Arg>
-    inline auto make_lazy(const Op& op, const base<Arg>& arg)
+    inline auto make_expr(const Op& op, const base<Arg>& arg)
     {
         return unary {op, get_access(arg.self()) };
     }

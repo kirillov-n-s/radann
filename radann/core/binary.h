@@ -34,48 +34,48 @@ namespace radann
     template <typename Lhs, typename Rhs>
     inline auto operator+(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::add{}, lhs, rhs);
+        return expr::make_expr(func::add{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator-(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::sub{}, lhs, rhs);
+        return expr::make_expr(func::sub{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator*(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::mul{}, lhs, rhs);
+        return expr::make_expr(func::mul{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto operator/(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::div{}, lhs, rhs);
+        return expr::make_expr(func::div{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto pow(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::pow{}, lhs, rhs);
+        return expr::make_expr(func::pow{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto atan2(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::atan2{}, lhs, rhs);
+        return expr::make_expr(func::atan2{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto min(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::min{}, lhs, rhs);
+        return expr::make_expr(func::min{}, lhs, rhs);
     }
 
     template <typename Lhs, typename Rhs>
     inline auto max(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        return expr::make_lazy(func::max{}, lhs, rhs);
+        return expr::make_expr(func::max{}, lhs, rhs);
     }
 }

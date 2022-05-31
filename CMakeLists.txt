@@ -4,7 +4,7 @@ project(coursework CUDA)
 set(CMAKE_CUDA_STANDARD 17)
 
 add_executable(coursework main.cu
-        radann/core/shape.h
+        radann/core/shape.h radann/core/shape.cpp
         radann/core/array.h
         radann/cuda/shared_storage.h
         radann/expr/base.h
@@ -37,13 +37,13 @@ add_executable(coursework main.cu
         radann/func/reduce.h
         radann/core/default.h
         radann/cuda/prop.h
-        radann/expr/tape.h
-        radann/expr/tape_context.h
+        radann/diff/tape.h
+        radann/diff/tape_context.h
         radann/cuda/shared_array.h
         radann/cuda/unique_array.h
         radann/cuda/launch.h
         radann/core/tape.h
-        radann/expr/eager.h)
+        radann/expr/eager.h radann/diff/grad_unary.h radann/diff/grad_binary.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
