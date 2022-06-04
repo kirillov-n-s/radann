@@ -1,84 +1,81 @@
 #pragma once
+#include "../expr/binary.h"
+#include "../oper/binary.h"
 
 namespace radann::func
 {
-    struct add
-    {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return x + y;
-        }
-    };
+    template <typename Lhs, typename Rhs>
+    inline auto operator+(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
-    struct sub
-    {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return x - y;
-        }
-    };
+    template <typename Lhs, typename Rhs>
+    inline auto operator-(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
-    struct mul
-    {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return x * y;
-        }
-    };
+    template <typename Lhs, typename Rhs>
+    inline auto operator*(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
-    struct div
-    {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return x / y;
-        }
-    };
+    template <typename Lhs, typename Rhs>
+    inline auto operator/(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
-    struct pow
-    {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return ::pow(x, y);
-        }
-    };
+    template <typename Lhs, typename Rhs>
+    inline auto pow(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
-    struct atan2
+    template <typename Lhs, typename Rhs>
+    inline auto atan2(const expr::base<Lhs>&, const expr::base<Rhs>&);
+
+    template <typename Lhs, typename Rhs>
+    inline auto min(const expr::base<Lhs>&, const expr::base<Rhs>&);
+
+    template <typename Lhs, typename Rhs>
+    inline auto max(const expr::base<Lhs>&, const expr::base<Rhs>&);
+}
+
+namespace radann::func
+{
+    template <typename Lhs, typename Rhs>
+    inline auto operator+(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return ::atan2(x, y);
-        }
-    };
-    
-    struct min
+        return expr::make_expr(oper::add{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto operator-(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return ::fmin(x, y);
-        }
-    };
-    
-    struct max
+        return expr::make_expr(oper::sub{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto operator*(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        template <typename T>
-        __host__ __device__ inline
-		T operator()(T x, T y) const
-        {
-            return ::fmax(x, y);
-        }
-    };
+        return expr::make_expr(oper::mul{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto operator/(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
+    {
+        return expr::make_expr(oper::div{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto pow(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
+    {
+        return expr::make_expr(oper::pow{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto atan2(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
+    {
+        return expr::make_expr(oper::atan2{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto min(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
+    {
+        return expr::make_expr(oper::min{}, lhs, rhs);
+    }
+
+    template <typename Lhs, typename Rhs>
+    inline auto max(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
+    {
+        return expr::make_expr(oper::max{}, lhs, rhs);
+    }
 }

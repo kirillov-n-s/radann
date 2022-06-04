@@ -1,6 +1,5 @@
 #pragma once
 #include "base.h"
-#include "../diff/tape_context.h"
 
 namespace radann::expr
 {
@@ -14,10 +13,10 @@ namespace radann::expr
     private:
         const T* _data;
         size_t _size;
-        shape _shape;
+        core::shape _shape;
         std::optional<size_t> _grad_index;
 
-        access(const T*, size_t, const shape&, const std::optional<size_t>&);
+        access(const T*, size_t, const core::shape&, const std::optional<size_t>&);
 
     public:
         __host__ __device__ inline
@@ -27,9 +26,7 @@ namespace radann::expr
         auto shape() const;
         size_t shape(size_t) const;
 
-        bool ad() const;
-        template<typename Expr>
-        void propagate_grad(const base<Expr>&) const;
+        const std::optional<size_t>& grad_index() const;
 
         template<typename Expr>
         friend inline auto get_access(const Expr&);
@@ -39,7 +36,7 @@ namespace radann::expr
 namespace radann::expr
 {
     template<typename T>
-    access<T>::access(const T *data, size_t size, const radann::shape &shape, const std::optional<size_t> &grad_index)
+    access<T>::access(const T *data, size_t size, const core::shape &shape, const std::optional<size_t> &grad_index)
         : _data(data), _size(size), _shape(shape), _grad_index(grad_index)
     {}
     
@@ -69,18 +66,9 @@ namespace radann::expr
     }
 
     template<typename T>
-    bool access<T>::ad() const
+    const std::optional<size_t> &access<T>::grad_index() const
     {
-        return _grad_index.has_value();
-    }
-
-    template<typename T>
-    template<typename Expr>
-    void access<T>::propagate_grad(const base<Expr> &mult) const
-    {
-        if (!ad())
-            throw std::runtime_error("Accessed array is not differentiated.");
-        get_tape<T>()->push_rvalue(_grad_index, mult);
+        return _grad_index;
     }
 
     template<typename Expr>
@@ -90,6 +78,6 @@ namespace radann::expr
             return expr;
         else
             return access<typename Expr::value_type>
-                    { expr.data(), expr.size(), expr.shape(), expr.grad_index() };
+                { expr.data(), expr.size(), expr.shape(), expr.grad_index() };
     }
 }

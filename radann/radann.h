@@ -1,11 +1,11 @@
 #pragma once
 
-#include "core/creation.h"
-#include "core/unary.h"
-#include "core/binary.h"
-#include "core/linalg.h"
-#include "core/reduce.h"
-#include "core/tape.h"
+#include "api/creation.h"
+#include "func/unary.h"
+#include "func/binary.h"
+#include "func/linalg.h"
+#include "func/reduce.h"
+#include "api/tape.h"
 
 using radann::operator+;
 using radann::operator-;

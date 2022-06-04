@@ -1,79 +1,83 @@
 #pragma once
-#include "../cuda/reduce.h"
-#include "../cuda/cublas.h"
-#include "../core/array.h"
-#include "binary.h"
+#include "../core/eager.h"
+#include "../core/reduce.h"
+#include "unary.h"
 
-namespace radann::func
+namespace radann
 {
-    struct sum
+    template <typename Arg>
+    inline auto sum(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto prod(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto minval(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto maxval(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto norm2(const expr::base<Arg>&);
+
+    /*template <typename Arg>
+    inline auto mean(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto var(const expr::base<Arg>&);
+
+    template <typename Arg>
+    inline auto stddev(const expr::base<Arg>&);*/
+}
+
+namespace radann
+{
+    template <typename Arg>
+    inline auto sum(const expr::base<Arg>& arg)
     {
-        static constexpr bool requires_validation = false;
+        return expr::make_eager(oper::sum{}, arg);
+    }
 
-        template <size_t N, bool AD, typename T>
-        auto operator()(const array<N, AD, T> &x) const
-        {
-            auto res = make_array<AD, T>(radann::make_shape());
-            cuda::reduce(x.data(), res.data(), x.size(), add{});
-            return res;
-        }
-
-        template<size_t N, bool AD, typename T, typename Mult>
-        auto accumulate_grad(const array<N, AD, T> &arg, const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-    };
-
-    struct prod
+    template <typename Arg>
+    inline auto prod(const expr::base<Arg>& arg)
     {
-        static constexpr bool requires_validation = false;
+        return expr::make_eager(oper::prod{}, arg);
+    }
 
-        template <size_t N, bool AD, typename T>
-        auto operator()(const array<N, AD, T> &x) const
-        {
-            auto res = make_array<AD, T>(radann::make_shape());
-            cuda::reduce(x.data(), res.data(), x.size(), mul{});
-            return res;
-        }
-    };
-
-    struct maxval
+    template <typename Arg>
+    inline auto minval(const expr::base<Arg>& arg)
     {
-        static constexpr bool requires_validation = false;
+        return expr::make_eager(oper::minval{}, arg);
+    }
 
-        template <size_t N, bool AD, typename T>
-        auto operator()(const array<N, AD, T> &x) const
-        {
-            auto res = make_array<AD, T>(radann::make_shape());
-            cuda::reduce(x.data(), res.data(), x.size(), max{});
-            return res;
-        }
-    };
-
-    struct minval
+    template <typename Arg>
+    inline auto maxval(const expr::base<Arg>& arg)
     {
-        static constexpr bool requires_validation = false;
+        return expr::make_eager(oper::maxval{}, arg);
+    }
 
-        template <size_t N, bool AD, typename T>
-        auto operator()(const array<N, AD, T> &x) const
-        {
-            auto res = make_array<AD, T>(radann::make_shape());
-            cuda::reduce(x.data(), res.data(), x.size(), min{});
-            return res;
-        }
-    };
-
-    struct norm2
+    template <typename Arg>
+    inline auto norm2(const expr::base<Arg>& arg)
     {
-        static constexpr bool requires_validation = false;
+        return expr::make_eager(oper::norm2{}, arg);
+    }
 
-        template <size_t N, bool AD, typename T>
-        auto operator()(const array<N, AD, T> &x) const
-        {
-            auto res = make_array<AD, T>(radann::make_shape());
-            cuda::cublas::nrm2(x.data(), res.data(), x.size());
-            return res;
-        }
-    };
+    /*template <typename Arg>
+    inline auto mean(const expr::base<Arg>& arg)
+    {
+        auto map = expr::eager(oper::sum{}, arg);
+        return map /= constant<typename Arg::value_type>(map.arg().size());
+    }
+
+    template <typename Arg>
+    inline auto var(const expr::base<Arg>& arg)
+    {
+        return sum(pow2(arg - mean(arg)));
+    }
+
+    template <typename Arg>
+    inline auto stddev(const expr::base<Arg>& arg)
+    {
+        return make_array(sqrt(var(arg)));
+    }*/
 }

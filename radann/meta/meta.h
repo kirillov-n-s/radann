@@ -1,6 +1,6 @@
 #pragma once
 
-namespace radann
+namespace radann::meta
 {
     /*template<typename Expr, typename = void>
     struct has_subscript : std::false_type {};

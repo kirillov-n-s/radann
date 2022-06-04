@@ -24,9 +24,8 @@ namespace radann::expr
         auto shape() const;
         auto shape(size_t) const;
 
-        bool ad() const;
-        template<typename Expr>
-        void propagate_grad(const base<Expr>&) const;
+        const Op& op() const;
+        const Arg& arg() const;
 
         template<typename Op, typename Arg>
         friend inline auto make_expr(const Op&, const base<Arg>&);
@@ -65,17 +64,15 @@ namespace radann::expr
     }
 
     template<typename Op, typename Arg>
-    bool unary<Op, Arg>::ad() const
+    const Op &unary<Op, Arg>::op() const
     {
-        return _arg.ad();
+        return _op;
     }
 
     template<typename Op, typename Arg>
-    template<typename Expr>
-    void unary<Op, Arg>::propagate_grad(const base<Expr> &mult) const
+    const Arg &unary<Op, Arg>::arg() const
     {
-        if constexpr (Arg::is_autodiff)
-            _arg.propagate_grad(_op.accumulate_grad(_arg, mult));
+        return _arg;
     }
 
     template<typename Op, typename Arg>

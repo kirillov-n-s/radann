@@ -23,8 +23,6 @@ namespace radann::expr
         auto shape() const;
         auto shape(size_t) const;
 
-        bool ad() const;
-
         template<typename Seq>
         friend inline auto make_expr(const Seq&);
     };
@@ -52,7 +50,7 @@ namespace radann::expr
     template<typename Seq>
     auto term<Seq>::shape() const
     {
-        return make_shape();
+        return core::make_shape();
     }
 
     template<typename Seq>
@@ -65,11 +63,5 @@ namespace radann::expr
     inline auto make_expr(const Seq &seq)
     {
         return term { seq };
-    }
-
-    template<typename Seq>
-    bool term<Seq>::ad() const
-    {
-        return false;
     }
 }

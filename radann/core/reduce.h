@@ -1,83 +1,79 @@
 #pragma once
-#include "../expr/eager.h"
-#include "../func/reduce.h"
-#include "unary.h"
+#include "../cuda/reduce.h"
+#include "../cuda/cublas.h"
+#include "array.h"
+#include "../oper/binary.h"
 
-namespace radann
+namespace radann::core
 {
-    template <typename Arg>
-    inline auto sum(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto prod(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto minval(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto maxval(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto norm2(const expr::base<Arg>&);
-
-    /*template <typename Arg>
-    inline auto mean(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto var(const expr::base<Arg>&);
-
-    template <typename Arg>
-    inline auto stddev(const expr::base<Arg>&);*/
-}
-
-namespace radann
-{
-    template <typename Arg>
-    inline auto sum(const expr::base<Arg>& arg)
+    struct sum
     {
-        return expr::make_eager(func::sum{}, arg);
-    }
+        static constexpr bool requires_validation = false;
 
-    template <typename Arg>
-    inline auto prod(const expr::base<Arg>& arg)
-    {
-        return expr::make_eager(func::prod{}, arg);
-    }
+        template <size_t N, bool AD, typename T>
+        auto operator()(const array<N, AD, T> &x) const
+        {
+            auto res = make_array<AD, T>(radann::make_shape());
+            cuda::reduce(x.data(), res.data(), x.size(), add{});
+            return res;
+        }
 
-    template <typename Arg>
-    inline auto minval(const expr::base<Arg>& arg)
-    {
-        return expr::make_eager(func::minval{}, arg);
-    }
+        template<size_t N, bool AD, typename T, typename Mult>
+        auto accumulate_grad(const array<N, AD, T> &arg, const expr::base<Mult> &mult) const
+        {
+            return mult.self();
+        }
+    };
 
-    template <typename Arg>
-    inline auto maxval(const expr::base<Arg>& arg)
+    struct prod
     {
-        return expr::make_eager(func::maxval{}, arg);
-    }
+        static constexpr bool requires_validation = false;
 
-    template <typename Arg>
-    inline auto norm2(const expr::base<Arg>& arg)
-    {
-        return expr::make_eager(func::norm2{}, arg);
-    }
+        template <size_t N, bool AD, typename T>
+        auto operator()(const array<N, AD, T> &x) const
+        {
+            auto res = make_array<AD, T>(radann::make_shape());
+            cuda::reduce(x.data(), res.data(), x.size(), mul{});
+            return res;
+        }
+    };
 
-    /*template <typename Arg>
-    inline auto mean(const expr::base<Arg>& arg)
+    struct maxval
     {
-        auto map = expr::make_eager(func::sum{}, arg);
-        return map /= constant<typename Arg::value_type>(map.arg().size());
-    }
+        static constexpr bool requires_validation = false;
 
-    template <typename Arg>
-    inline auto var(const expr::base<Arg>& arg)
-    {
-        return sum(pow2(arg - mean(arg)));
-    }
+        template <size_t N, bool AD, typename T>
+        auto operator()(const array<N, AD, T> &x) const
+        {
+            auto res = make_array<AD, T>(radann::make_shape());
+            cuda::reduce(x.data(), res.data(), x.size(), max{});
+            return res;
+        }
+    };
 
-    template <typename Arg>
-    inline auto stddev(const expr::base<Arg>& arg)
+    struct minval
     {
-        return make_array(sqrt(var(arg)));
-    }*/
+        static constexpr bool requires_validation = false;
+
+        template <size_t N, bool AD, typename T>
+        auto operator()(const array<N, AD, T> &x) const
+        {
+            auto res = make_array<AD, T>(radann::make_shape());
+            cuda::reduce(x.data(), res.data(), x.size(), min{});
+            return res;
+        }
+    };
+
+    struct norm2
+    {
+        static constexpr bool requires_validation = false;
+
+        template <size_t N, bool AD, typename T>
+        auto operator()(const array<N, AD, T> &x) const
+        {
+            auto res = make_array<AD, T>(radann::make_shape());
+            cuda::cublas::nrm2(x.data(), res.data(), x.size());
+            return res;
+        }
+    };
 }

@@ -1,21 +1,11 @@
 #include "radann/radann.h"
 #include <chrono>
+#include <iostream>
 
 using timer = std::chrono::system_clock;
 
 int main()
 {
-    /*auto x = radann::make_arithm(radann::make_shape(5), 1.f, 1.f);
-    auto y = radann::make_arithm(radann::make_shape(5), 5.f, -1.f);
-    auto z = radann::make_arithm(radann::make_shape(5), 1.f, 1.f);
-
-    auto a = radann::eval(-radann::pow2(x) + y / z);
-    a.set_grad(radann::arithm(1.f, 1.f));
-    radann::reverse();
-    std::cout << x.get_grad() << y.get_grad() << z.get_grad();
-
-    radann::clear();*/
-
     auto s = radann::make_shape(1);
 
     auto x0 = radann::make_constant(s, 1.337f);

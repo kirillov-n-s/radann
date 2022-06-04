@@ -3,12 +3,6 @@
 #include "../expr/base.h"
 //#include "../core/array.h"
 
-namespace radann
-{
-    template<typename T = real>
-    class array;
-}
-
 namespace radann::diff
 {
     template<typename T>

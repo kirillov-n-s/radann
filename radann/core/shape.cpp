@@ -1,6 +1,6 @@
 #include "shape.h"
 
-namespace radann
+namespace radann::core
 {
     template<typename InputIterator>
     shape::shape(InputIterator first, InputIterator last)

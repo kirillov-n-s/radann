@@ -1,64 +1,50 @@
 #pragma once
+#include "../expr/term.h"
+#include "../oper/sequence.h"
 
 namespace radann::func
 {
-    template <typename T>
-    class constant
+    template<typename T>
+    inline auto constant(T);
+
+    inline auto operator""_C(long double);
+
+    inline auto operator""_fC(long double);
+
+    template<typename T>
+    inline auto arithm(T, T);
+
+    template<typename T>
+    inline auto geom(T, T);
+}
+
+namespace radann::func
+{
+    template<typename T>
+    inline auto constant(T value)
     {
-    public:
-        using value_type = T;
+        return expr::make_expr(oper::constant<T>{value});
+    }
 
-    private:
-        T _value;
-
-    public:
-        constant(T value)
-            : _value(value) {};
-
-        __host__ __device__
-        inline T operator()(size_t) const
-        {
-            return _value;
-        }
-    };
-
-    template <typename T>
-    class arithm
+    inline auto operator""_C(long double value)
     {
-    public:
-        using value_type = T;
+        return constant((double)value);
+    }
 
-    private:
-        T _offset, _step;
-
-    public:
-        arithm(T offset, T step)
-            : _offset(offset), _step(step) {};
-
-        __host__ __device__
-        inline T operator()(size_t i) const
-        {
-            return _offset + i * _step;
-        }
-    };
-
-    template <typename T>
-    class geom
+    inline auto operator""_fC(long double value)
     {
-    public:
-        using value_type = T;
+        return constant((float)value);
+    }
 
-    private:
-        T _scale, _ratio;
+    template<typename T>
+    inline auto arithm(T offset, T step)
+    {
+        return expr::make_expr(oper::arithm<T>(offset, step));
+    }
 
-    public:
-        geom(T scale, T ratio)
-            : _scale(scale), _ratio(ratio) {};
-
-        __host__ __device__
-        inline T operator()(size_t i) const
-        {
-            return _scale * ::pow(_ratio, i);
-        }
-    };
+    template<typename T>
+    inline auto geom(T scale, T ratio)
+    {
+        return expr::make_expr(oper::geom<T>(scale, ratio));
+    }
 }

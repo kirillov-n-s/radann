@@ -1,6 +1,5 @@
 #pragma once
 #include "access.h"
-#include "../diff/grad_binary.h"
 
 namespace radann::expr
 {
@@ -16,9 +15,9 @@ namespace radann::expr
         Lhs _lhs;
         Rhs _rhs;
 
-    public:
         binary(const Op&, const Lhs&, const Rhs&);
 
+    public:
         __host__ __device__ inline
         value_type operator[](size_t) const;
 
@@ -26,9 +25,9 @@ namespace radann::expr
         auto shape() const;
         size_t shape(size_t) const;
 
-        bool ad() const;
-        template<typename Expr>
-        void propagate_grad(const base<Expr>&) const;
+        const Op& op() const;
+        const Lhs& lhs() const;
+        const Rhs& rhs() const;
 
         template<typename Op, typename Lhs, typename Rhs>
         friend inline auto make_expr(const Op&, const base<Lhs>&, const base<Rhs>&);
@@ -69,19 +68,21 @@ namespace radann::expr
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    bool binary<Op, Lhs, Rhs>::ad() const
+    const Op &binary<Op, Lhs, Rhs>::op() const
     {
-        return _lhs.ad() || _rhs.ad();
+        return _op;
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    template<typename Expr>
-    void binary<Op, Lhs, Rhs>::propagate_grad(const base<Expr> &mult) const
+    const Lhs &binary<Op, Lhs, Rhs>::lhs() const
     {
-        if (_lhs.ad())
-            _lhs.propagate_grad(diff::grad_lhs<Op>{}(_lhs, _rhs, mult));
-        if (_rhs.ad())
-            _rhs.propagate_grad(diff::grad_rhs<Op>{}(_lhs, _rhs, mult));
+        return _lhs;
+    }
+
+    template<typename Op, typename Lhs, typename Rhs>
+    const Rhs &binary<Op, Lhs, Rhs>::rhs() const
+    {
+        return _rhs;
     }
 
     template<typename Op, typename Lhs, typename Rhs>

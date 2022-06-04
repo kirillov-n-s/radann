@@ -4,7 +4,7 @@
 #include <numeric>
 #include <iostream>
 
-namespace radann
+namespace radann::core
 {
     class shape
     {

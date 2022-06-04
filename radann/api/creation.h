@@ -1,7 +1,7 @@
 #pragma once
-#include "array.h"
-#include "sequence.h"
-#include "random.h"
+#include "../core/array.h"
+#include "../func/sequence.h"
+#include "../func/random.h"
 
 namespace radann
 {

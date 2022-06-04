@@ -1,24 +1,24 @@
 #pragma once
-#include "../core/util.h"
-#include "../core/binary.h"
-#include "../core/unary.h"
+#include "../meta/meta.h"
+#include "../func/binary.h"
+#include "../func/unary.h"
 
 namespace radann::diff
 {
     template<typename Op>
     struct grad_lhs
     {
-        static_assert(radann::always_false_v<Op>, "Operator type is not supported.");
+        static_assert(meta::always_false_v<Op>, "Operator type is not supported.");
     };
 
     template<typename Op>
     struct grad_rhs
     {
-        static_assert(radann::always_false_v<Op>, "Operator type is not supported.");
+        static_assert(meta::always_false_v<Op>, "Operator type is not supported.");
     };
 
     template<>
-    struct grad_lhs<radann::func::add>
+    struct grad_lhs<oper::add>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -30,7 +30,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_rhs<radann::func::add>
+    struct grad_rhs<oper::add>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -42,7 +42,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_lhs<radann::func::sub>
+    struct grad_lhs<oper::sub>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -54,7 +54,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_rhs<radann::func::sub>
+    struct grad_rhs<oper::sub>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -66,7 +66,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_lhs<radann::func::mul>
+    struct grad_lhs<oper::mul>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -78,7 +78,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_rhs<radann::func::mul>
+    struct grad_rhs<oper::mul>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -90,7 +90,7 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_lhs<radann::func::div>
+    struct grad_lhs<oper::div>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
@@ -102,14 +102,14 @@ namespace radann::diff
     };
 
     template<>
-    struct grad_rhs<radann::func::div>
+    struct grad_rhs<oper::div>
     {
         template<typename Lhs, typename Rhs, typename Mult>
         auto operator()(const expr::base<Lhs> &lhs,
                         const expr::base<Rhs> &rhs,
                         const expr::base<Mult> &mult) const
         {
-            return -lhs / radann::pow2(rhs) * mult;
+            return -lhs / func::pow2(rhs) * mult;
         }
     };
 }

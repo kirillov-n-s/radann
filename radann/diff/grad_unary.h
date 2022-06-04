@@ -1,18 +1,18 @@
 #pragma once
-#include "../core/util.h"
-#include "../core/unary.h"
-#include "../core/sequence.h"
+#include "../meta/meta.h"
+#include "../func/unary.h"
+#include "../func/sequence.h"
 
 namespace radann::diff
 {
     template<typename Op>
     struct grad
     {
-        static_assert(radann::always_false_v<Op>, "Operator type is not supported.");
+        static_assert(meta::always_false_v<Op>, "Operator type is not supported.");
     };
 
     template<>
-    struct grad<radann::func::neg>
+    struct grad<radann::oper::neg>
     {
         template<typename Arg, typename Mult>
         auto operator()(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
@@ -22,27 +22,27 @@ namespace radann::diff
     };
 
     template<>
-    struct grad<radann::func::sin>
+    struct grad<radann::oper::sin>
     {
         template<typename Arg, typename Mult>
         auto operator()(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
         {
-            return radann::cos(arg) * mult;
+            return func::cos(arg) * mult;
         }
     };
 
     template<>
-    struct grad<radann::func::pow2>
+    struct grad<radann::oper::pow2>
     {
         template<typename Arg, typename Mult>
         auto operator()(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const
         {
-            return radann::constant<typename Arg::value_type>(2) * arg * mult;
+            return func::constant<typename Arg::value_type>(2) * arg * mult;
         }
     };
 
     template<>
-    struct grad<radann::func::log>
+    struct grad<radann::oper::log>
     {
         template<typename Arg, typename Mult>
         auto operator()(const expr::base<Arg> &arg, const expr::base<Mult> &mult) const

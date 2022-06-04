@@ -1,6 +1,6 @@
 #pragma once
 #include <curand_kernel.h>
-#include "../core/util.h"
+#include "../meta/meta.h"
 
 namespace radann::cuda
 {
@@ -34,7 +34,7 @@ namespace radann::cuda
         else if constexpr(std::is_same_v<T, double>)
             return curand_uniform_double(&_state);
         else
-            static_assert(always_false_v<T>, "PRNG not specialized for this type.");
+            static_assert(meta::always_false_v<T>, "PRNG not specialized for this type.");
     }
 
     template <typename T>
@@ -45,6 +45,6 @@ namespace radann::cuda
         else if constexpr(std::is_same_v<T, double>)
             return curand_normal_double(&_state);
         else
-            static_assert(always_false_v<T>, "PRNG not specialized for this type.");
+            static_assert(meta::always_false_v<T>, "PRNG not specialized for this type.");
     }
 }

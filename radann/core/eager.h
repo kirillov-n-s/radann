@@ -1,20 +1,20 @@
 #pragma once
-#include "access.h"
-#include "../core/eval.h"
+#include "../expr/access.h"
+#include "eval.h"
 
-namespace radann::expr
+namespace radann::core
 {
     template<typename Op, typename Arg>
-    auto make_eager(const Op&, const base<Arg>&);
+    auto eager(const Op&, const expr::base<Arg>&);
 
     template <typename Op, typename Lhs, typename Rhs>
-    auto make_eager(const Op&, const base<Lhs>&, const base<Rhs>&);
+    auto eager(const Op&, const expr::base<Lhs>&, const expr::base<Rhs>&);
 }
 
-namespace radann::expr
+namespace radann::core
 {
     template<typename Op, typename Arg>
-    auto make_eager(const Op &op, const base<Arg> &arg)
+    auto eager(const Op &op, const expr::base<Arg> &arg)
     {
         if constexpr(Op::requires_validation)
             op.validate(arg);
@@ -33,7 +33,7 @@ namespace radann::expr
     }
 
     template<typename Op, typename Lhs, typename Rhs>
-    auto make_eager(const Op &op, const base<Lhs> &lhs, const base<Rhs> &rhs)
+    auto eager(const Op &op, const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
         if constexpr(Op::requires_validation)
             op.validate(lhs, rhs);

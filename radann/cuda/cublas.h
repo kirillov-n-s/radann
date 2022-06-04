@@ -1,6 +1,6 @@
 #pragma once
 #include <cublas_v2.h>
-#include "../core/util.h"
+#include "../meta/meta.h"
 
 namespace radann::cuda
 {
@@ -72,7 +72,7 @@ namespace radann::cuda
                                 rhs, 1,
                                 res);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -97,7 +97,7 @@ namespace radann::cuda
                                  arg, 1,
                                  res);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -132,7 +132,7 @@ namespace radann::cuda
                                  &beta,
                                  res, 1);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -162,7 +162,7 @@ namespace radann::cuda
                                 rhs, 1,
                                 res, rows);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -199,7 +199,7 @@ namespace radann::cuda
                                  &beta,
                                  res, rows);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)
@@ -234,7 +234,7 @@ namespace radann::cuda
                                  nullptr, cols,
                                  res, cols);
         else
-                static_assert(always_false_v<T>, "cuBLAS not specialized for this type.");
+                static_assert(meta::always_false_v<T>, "cuBLAS not specialized for this type.");
 
         cudaDeviceSynchronize();
         if (status != CUBLAS_STATUS_SUCCESS)

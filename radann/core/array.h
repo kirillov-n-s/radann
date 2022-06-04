@@ -6,10 +6,8 @@
 #include "../cuda/shared_array.h"
 #include "../cuda/assign.h"
 #include "../expr/access.h"
-#include "../diff/tape_context.h"
-#include "sequence.h"
 
-namespace radann
+namespace radann::core
 {
     template<typename T = real>
     class array :
@@ -24,23 +22,23 @@ namespace radann
         shape _shape;
         std::optional<size_t> _grad_index = std::nullopt;
 
-        array(cuda::shared_storage<T>*, const radann::shape&, size_t, const std::optional<size_t>&, bool = true);
+        array(cuda::shared_storage<T>*, const shape&, size_t, const std::optional<size_t>&, bool = true);
 
     public:
-        array(const radann::shape&, bool = autodiff);
+        array(const shape&, bool = autodiff);
         template<typename InputIterator>
-        array(const radann::shape&, InputIterator, InputIterator, bool = autodiff);
-        array(const radann::shape&, const std::initializer_list<T>&, bool = autodiff);
+        array(const shape&, InputIterator, InputIterator, bool = autodiff);
+        array(const shape&, const std::initializer_list<T>&, bool = autodiff);
 
         array(const array&);
 
         template<typename Expr>
-        array(const radann::shape&, const expr::base<Expr>&, bool);
+        array(const shape&, const expr::base<Expr>&, bool);
         template<typename Expr>
         array(const expr::base<Expr>&, bool);
 
         template<typename Expr>
-        array(const radann::shape&, const expr::base<Expr>&);
+        array(const shape&, const expr::base<Expr>&);
         template<typename Expr>
         array(const expr::base<Expr>&);
 
@@ -65,14 +63,14 @@ namespace radann
         array& operator>>=(const array&);
 
         size_t rank() const;
-        const radann::shape& shape() const;
+        const shape& shape() const;
         size_t shape(size_t) const;
 
-        array<T> at(const radann::shape&) const;
+        array<T> at(const radann::core::shape&) const;
         template <typename... Indices>
         array<T> operator()(Indices...) const;
 
-        array<T> reshape(const radann::shape&) const;
+        array<T> reshape(const radann::core::shape&) const;
         array<T> flatten(size_t) const;
         array<T> flatten() const;
 
@@ -84,12 +82,12 @@ namespace radann
     };
 
     template<typename T = real>
-    inline auto make_array(const radann::shape&, bool = autodiff);
+    inline auto make_array(const shape&, bool = autodiff);
 
     template<typename InputIterator>
-    inline auto make_array(const radann::shape&, InputIterator, InputIterator, bool = autodiff);
+    inline auto make_array(const shape&, InputIterator, InputIterator, bool = autodiff);
     template<typename T>
-    inline auto make_array(const radann::shape&, const std::initializer_list<T>&, bool = autodiff);
+    inline auto make_array(const shape&, const std::initializer_list<T>&, bool = autodiff);
 
     template <typename Expr>
     inline auto make_array(const shape&, const expr::base<Expr>&);
@@ -105,10 +103,10 @@ namespace radann
     std::ostream& operator<<(std::ostream&, const array<T>&);
 }
 
-namespace radann
+namespace radann::core
 {
     template<typename T>
-    array<T>::array(cuda::shared_storage<T> *storage, const radann::shape &shape, size_t offset,
+    array<T>::array(cuda::shared_storage<T> *storage, const radann::core::shape &shape, size_t offset,
                     const std::optional<size_t>& base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape),
@@ -120,7 +118,7 @@ namespace radann
     {}
 
     template<typename T>
-    array<T>::array(const radann::shape &shape, bool ad)
+    array<T>::array(const radann::core::shape &shape, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
           _grad_index(ad
@@ -130,7 +128,7 @@ namespace radann
 
     template<typename T>
     template<typename InputIterator>
-    array<T>::array(const radann::shape &shape, InputIterator first, InputIterator last, bool ad)
+    array<T>::array(const radann::core::shape &shape, InputIterator first, InputIterator last, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
           _grad_index(ad
@@ -145,7 +143,7 @@ namespace radann
     }
 
     template<typename T>
-    array<T>::array(const radann::shape &shape, const std::initializer_list<T> &data, bool ad)
+    array<T>::array(const radann::core::shape &shape, const std::initializer_list<T> &data, bool ad)
         : array(shape, data.begin(), data.end(), ad)
     {}
 
@@ -156,7 +154,7 @@ namespace radann
 
     template<typename T>
     template<typename Expr>
-    array<T>::array(const radann::shape &shape, const expr::base<Expr> &expr, bool ad)
+    array<T>::array(const radann::core::shape &shape, const expr::base<Expr> &expr, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape)
     {
@@ -177,7 +175,7 @@ namespace radann
 
     template<typename T>
     template<typename Expr>
-    array<T>::array(const radann::shape &shape, const expr::base<Expr> &expr)
+    array<T>::array(const radann::core::shape &shape, const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr, expr.self().ad())
     {}
 
@@ -276,7 +274,7 @@ namespace radann
     }
 
     template<typename T>
-    const radann::shape &array<T>::shape() const
+    const shape &array<T>::shape() const
     {
         return _shape;
     }
@@ -288,7 +286,7 @@ namespace radann
     }
 
     template<typename T>
-    array<T> array<T>::at(const radann::shape &index) const
+    array<T> array<T>::at(const radann::core::shape &index) const
     {
         auto extents = _shape.cut(index.rank());
         auto offset = _shape.offset(index);
@@ -303,7 +301,7 @@ namespace radann
     }
 
     template<typename T>
-    array<T> array<T>::reshape(const radann::shape &shape) const
+    array<T> array<T>::reshape(const radann::core::shape &shape) const
     {
         if (this->_size != shape.length())
             throw std::invalid_argument("Array size mismatch.");
@@ -358,13 +356,13 @@ namespace radann
     }
 
     template<typename InputIterator>
-    inline auto make_array(const radann::shape& shape, InputIterator first, InputIterator last, bool ad)
+    inline auto make_array(const shape& shape, InputIterator first, InputIterator last, bool ad)
     {
         return array<typename std::iterator_traits<InputIterator>::value_type> { shape, first, last, ad };
     }
 
     template<typename T>
-    inline auto make_array(const radann::shape& shape, const std::initializer_list<T>& data, bool ad)
+    inline auto make_array(const shape& shape, const std::initializer_list<T>& data, bool ad)
     {
         return array<T> { shape, data, ad };
     }

@@ -1,45 +1,28 @@
 #pragma once
-#include "../cuda/random.h"
+#include <random>
+#include "../expr/term.h"
+#include "../oper/random.h"
 
 namespace radann::func
 {
-    template <typename T>
-    class uniform
+    template<typename T>
+    inline auto uniform(unsigned int = std::random_device{}());
+
+    template<typename T>
+    inline auto normal(unsigned int = std::random_device{}());
+}
+
+namespace radann::func
+{
+    template<typename T>
+    inline auto uniform(unsigned int seed)
     {
-    public:
-        using value_type = T;
+        return expr::make_expr(oper::uniform<T>{seed});
+    }
 
-    private:
-        unsigned int _seed;
-
-    public:
-        uniform(unsigned int seed)
-            : _seed(seed) {};
-
-        __device__ inline
-        T operator()(size_t i) const
-        {
-            return cuda::random<T>{ _seed, i }.uniform();
-        }
-    };
-
-    template <typename T>
-    class normal
+    template<typename T>
+    inline auto normal(unsigned int seed)
     {
-    public:
-        using value_type = T;
-
-    private:
-        unsigned int _seed;
-
-    public:
-        normal(unsigned int seed)
-            : _seed(seed) {};
-
-        __device__ inline
-        T operator()(size_t i) const
-        {
-            return cuda::random<T>{ _seed, i }.normal();
-        }
-    };
+        return expr::make_expr(oper::normal<T>{seed});
+    }
 }

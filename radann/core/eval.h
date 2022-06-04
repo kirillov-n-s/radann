@@ -1,13 +1,13 @@
 #pragma once
 #include "array.h"
 
-namespace radann
+namespace radann::core
 {
     template <typename Expr>
     inline auto eval(const expr::base<Expr>&);
 }
 
-namespace radann
+namespace radann::core
 {
     template <typename Expr>
     inline auto eval(const expr::base<Expr>& expr)
