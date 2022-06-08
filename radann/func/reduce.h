@@ -3,7 +3,7 @@
 #include "../core/reduce.h"
 #include "unary.h"
 
-namespace radann
+namespace radann::func
 {
     template <typename Arg>
     inline auto sum(const expr::base<Arg>&);
@@ -30,7 +30,7 @@ namespace radann
     inline auto stddev(const expr::base<Arg>&);*/
 }
 
-namespace radann
+namespace radann::func
 {
     template <typename Arg>
     inline auto sum(const expr::base<Arg>& arg)

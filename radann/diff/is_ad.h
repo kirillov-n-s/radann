@@ -6,8 +6,8 @@
 
 namespace radann::diff
 {
-    template<typename T>
-    bool is_ad(const expr::access<T>&);
+    template<typename T, typename Policy>
+    bool is_ad(const expr::access<T, Policy>&);
 
     template<typename Op, typename Lhs, typename Rhs>
     bool is_ad(const expr::binary<Op, Lhs, Rhs>&);
@@ -21,10 +21,10 @@ namespace radann::diff
 
 namespace radann::diff
 {
-    template<typename T>
-    bool is_ad(const expr::access<T> &access)
+    template<typename T, typename Policy>
+    bool is_ad(const expr::access<T, Policy> &access)
     {
-        return access.grad_index().has_value();
+        return access.ad();
     }
 
     template<typename Op, typename Lhs, typename Rhs>

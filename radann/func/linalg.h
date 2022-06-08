@@ -2,7 +2,7 @@
 #include "../core/eager.h"
 #include "../core/linalg.h"
 
-namespace radann
+namespace radann::func
 {
     template <typename Lhs, typename Rhs>
     inline auto dot(const expr::base<Lhs>&, const expr::base<Rhs>&);
@@ -26,7 +26,7 @@ namespace radann
     inline auto inverse(const expr::base<Arg>&);*/
 }
 
-namespace radann
+namespace radann::func
 {
     template <typename Lhs, typename Rhs>
     inline auto dot(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)

@@ -1,20 +1,24 @@
 #pragma once
+#include <optional>
 #include "base.h"
+#include "../core/shape.h"
 
 namespace radann::expr
 {
-    template<typename T>
-    class access : public base<access<T>>
+    template<typename T, typename Policy>
+    class access :
+        public base<access<T, Policy>>,
+        public Policy::record_type
     {
     public:
         using value_type = T;
+        using policy_type = Policy;
         static constexpr bool is_expr = true;
 
     private:
         const T* _data;
         size_t _size;
         core::shape _shape;
-        std::optional<size_t> _grad_index;
 
         access(const T*, size_t, const core::shape&, const std::optional<size_t>&);
 
@@ -26,8 +30,6 @@ namespace radann::expr
         auto shape() const;
         size_t shape(size_t) const;
 
-        const std::optional<size_t>& grad_index() const;
-
         template<typename Expr>
         friend inline auto get_access(const Expr&);
     };
@@ -35,40 +37,36 @@ namespace radann::expr
 
 namespace radann::expr
 {
-    template<typename T>
-    access<T>::access(const T *data, size_t size, const core::shape &shape, const std::optional<size_t> &grad_index)
-        : _data(data), _size(size), _shape(shape), _grad_index(grad_index)
+    template<typename T, typename Policy>
+    access<T, Policy>::access(const T *data, size_t size, const core::shape &shape,
+                      const std::optional<size_t> &grad_index)
+        : Policy::record_type(grad_index),
+          _data(data), _size(size), _shape(shape)
     {}
     
-    template<typename T>
+    template<typename T, typename Policy>
     __host__ __device__
-    T access<T>::operator[](size_t i) const
+    T access<T, Policy>::operator[](size_t i) const
     {
         return _data[i % _size];
     }
 
-    template<typename T>
-    size_t access<T>::rank() const
+    template<typename T, typename Policy>
+    size_t access<T, Policy>::rank() const
     {
         return _shape.rank();
     }
 
-    template<typename T>
-    auto access<T>::shape() const
+    template<typename T, typename Policy>
+    auto access<T, Policy>::shape() const
     {
         return _shape;
     }
 
-    template<typename T>
-    size_t access<T>::shape(size_t i) const
+    template<typename T, typename Policy>
+    size_t access<T, Policy>::shape(size_t i) const
     {
         return _shape[i];
-    }
-
-    template<typename T>
-    const std::optional<size_t> &access<T>::grad_index() const
-    {
-        return _grad_index;
     }
 
     template<typename Expr>
@@ -77,7 +75,7 @@ namespace radann::expr
         if constexpr(Expr::is_expr)
             return expr;
         else
-            return access<typename Expr::value_type>
+            return access<typename Expr::value_type, typename Expr::policy_type>
                 { expr.data(), expr.size(), expr.shape(), expr.grad_index() };
     }
 }

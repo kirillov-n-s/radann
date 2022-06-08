@@ -1,4 +1,5 @@
 #pragma once
+#include "../meta/meta.h"
 #include "access.h"
 
 namespace radann::expr
@@ -8,6 +9,7 @@ namespace radann::expr
     {
     public:
         using value_type = std::common_type_t<typename Lhs::value_type, typename Rhs::value_type>;
+        using policy_type = meta::same_type_t<typename Lhs::policy_type, typename Rhs::policy_type>;
         static constexpr bool is_expr = true;
 
     private:

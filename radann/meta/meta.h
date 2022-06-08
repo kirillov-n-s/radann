@@ -13,4 +13,30 @@ namespace radann::meta
 
     template <typename T>
     inline constexpr bool always_false_v = false;
+
+    template<typename T, typename U>
+    struct same_type {};
+
+    template<typename T>
+    struct same_type<T, T>
+    {
+        using type = T;
+    };
+
+    struct always_same_type {};
+
+    template<typename T>
+    struct same_type<always_same_type, T>
+    {
+        using type = T;
+    };
+
+    template<typename T>
+    struct same_type<T, always_same_type>
+    {
+        using type = T;
+    };
+
+    template<typename T, typename U>
+    using same_type_t = typename same_type<T, U>::type;
 }

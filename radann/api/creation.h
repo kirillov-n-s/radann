@@ -1,10 +1,28 @@
 #pragma once
-#include "../core/array.h"
 #include "../func/sequence.h"
 #include "../func/random.h"
+#include "using.h"
 
 namespace radann
 {
+    template<typename T = real>
+    inline auto make_array(const shape&, bool = autodiff);
+
+    template<typename InputIterator>
+    inline auto make_array(const shape&, InputIterator, InputIterator, bool = autodiff);
+    template<typename T>
+    inline auto make_array(const shape&, const std::initializer_list<T>&, bool = autodiff);
+
+    template <typename Expr>
+    inline auto make_array(const shape&, const expr::base<Expr>&);
+    template <typename Expr>
+    inline auto make_array(const expr::base<Expr>&);
+
+    template <typename Expr>
+    inline auto make_array(const shape&, const expr::base<Expr>&, bool);
+    template <typename Expr>
+    inline auto make_array(const expr::base<Expr>&, bool);
+
     template <typename T>
     inline auto make_constant(const shape&, T, bool = autodiff);
     template <typename T = real>
@@ -22,6 +40,48 @@ namespace radann
 
 namespace radann
 {
+    template<typename T>
+    inline auto make_array(const shape& shape, bool ad)
+    {
+        return array<T> { shape, ad };
+    }
+
+    template<typename InputIterator>
+    inline auto make_array(const shape& shape, InputIterator first, InputIterator last, bool ad)
+    {
+        return array<typename std::iterator_traits<InputIterator>::value_type> { shape, first, last, ad };
+    }
+
+    template<typename T>
+    inline auto make_array(const shape& shape, const std::initializer_list<T>& data, bool ad)
+    {
+        return array<T> { shape, data, ad };
+    }
+
+    template<typename Expr>
+    inline auto make_array(const shape& shape, const expr::base<Expr>& expr)
+    {
+        return array<typename Expr::value_type> { shape, expr };
+    }
+
+    template<typename Expr>
+    inline auto make_array(const expr::base<Expr>& expr)
+    {
+        return array<typename Expr::value_type> { expr };
+    }
+
+    template<typename Expr>
+    inline auto make_array(const shape& shape, const expr::base<Expr>& expr, bool ad)
+    {
+        return array<typename Expr::value_type> { shape, expr, ad };
+    }
+
+    template<typename Expr>
+    inline auto make_array(const expr::base<Expr>& expr, bool ad)
+    {
+        return array<typename Expr::value_type> { expr, ad };
+    }
+
     template <typename T>
     inline auto make_constant(const shape& shape, T value, bool ad)
     {

@@ -1,7 +1,5 @@
 #pragma once
 #include <iomanip>
-#include <optional>
-#include "default.h"
 #include "shape.h"
 #include "../cuda/shared_array.h"
 #include "../cuda/assign.h"
@@ -9,26 +7,27 @@
 
 namespace radann::core
 {
-    template<typename T = real>
+    template<typename T, typename Policy>
     class array :
-        public expr::base<array<T>>,
-        public cuda::shared_array<T>
+        public expr::base<array<T, Policy>>,
+        public cuda::shared_array<T>,
+        public Policy
     {
     public:
         using value_type = T;
+        using policy_type = Policy;
         static constexpr bool is_expr = false;
 
     private:
         shape _shape;
-        std::optional<size_t> _grad_index = std::nullopt;
 
         array(cuda::shared_storage<T>*, const shape&, size_t, const std::optional<size_t>&, bool = true);
 
     public:
-        array(const shape&, bool = autodiff);
+        array(const shape&, bool);
         template<typename InputIterator>
-        array(const shape&, InputIterator, InputIterator, bool = autodiff);
-        array(const shape&, const std::initializer_list<T>&, bool = autodiff);
+        array(const shape&, InputIterator, InputIterator, bool);
+        array(const shape&, const std::initializer_list<T>&, bool);
 
         array(const array&);
 
@@ -60,53 +59,29 @@ namespace radann::core
         template<typename Expr>
         array& operator/=(const expr::base<Expr>&);
 
-        array& operator>>=(const array&);
+        //array_no_ad& operator>>=(const array_no_ad&);
 
         size_t rank() const;
         const shape& shape() const;
         size_t shape(size_t) const;
 
-        array<T> at(const radann::core::shape&) const;
+        array<T, Policy> at(const radann::core::shape&) const;
         template <typename... Indices>
-        array<T> operator()(Indices...) const;
+        array<T, Policy> operator()(Indices...) const;
 
-        array<T> reshape(const radann::core::shape&) const;
-        array<T> flatten(size_t) const;
-        array<T> flatten() const;
-
-        bool ad() const;
-        const std::optional<size_t>& grad_index() const;
-        array<T> get_grad() const;
-        template<typename Expr>
-        void set_grad(const expr::base<Expr>&) const;
+        array<T, Policy> reshape(const radann::core::shape&) const;
+        array<T, Policy> flatten(size_t) const;
+        array<T, Policy> flatten() const;
     };
 
-    template<typename T = real>
-    inline auto make_array(const shape&, bool = autodiff);
-
-    template<typename InputIterator>
-    inline auto make_array(const shape&, InputIterator, InputIterator, bool = autodiff);
-    template<typename T>
-    inline auto make_array(const shape&, const std::initializer_list<T>&, bool = autodiff);
-
-    template <typename Expr>
-    inline auto make_array(const shape&, const expr::base<Expr>&);
-    template <typename Expr>
-    inline auto make_array(const expr::base<Expr>&);
-
-    template <typename Expr>
-    inline auto make_array(const shape&, const expr::base<Expr>&, bool);
-    template <typename Expr>
-    inline auto make_array(const expr::base<Expr>&, bool);
-
-    template<typename T>
-    std::ostream& operator<<(std::ostream&, const array<T>&);
+    template<typename T, typename Policy>
+    std::ostream& operator<<(std::ostream&, const array<T, Policy>&);
 }
 
 namespace radann::core
 {
-    template<typename T>
-    array<T>::array(cuda::shared_storage<T> *storage, const radann::core::shape &shape, size_t offset,
+    template<typename T, typename Policy>
+    array<T, Policy>::array(cuda::shared_storage<T> *storage, const radann::core::shape &shape, size_t offset,
                     const std::optional<size_t>& base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
           _shape(shape),
@@ -117,8 +92,8 @@ namespace radann::core
                          : base_index))
     {}
 
-    template<typename T>
-    array<T>::array(const radann::core::shape &shape, bool ad)
+    template<typename T, typename Policy>
+    array<T, Policy>::array(const radann::core::shape &shape, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
           _grad_index(ad
@@ -126,9 +101,9 @@ namespace radann::core
                       : std::nullopt)
     {}
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename InputIterator>
-    array<T>::array(const radann::core::shape &shape, InputIterator first, InputIterator last, bool ad)
+    array<T, Policy>::array(const radann::core::shape &shape, InputIterator first, InputIterator last, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape),
           _grad_index(ad
@@ -137,24 +112,24 @@ namespace radann::core
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
-            throw std::invalid_argument("Iterator range exceeds array shape.");
+            throw std::invalid_argument("Iterator range exceeds array_no_ad shape.");
         cuda::host_buffer<T> host { first, last };
         this->_storage->copy_from(host);
     }
 
-    template<typename T>
-    array<T>::array(const radann::core::shape &shape, const std::initializer_list<T> &data, bool ad)
+    template<typename T, typename Policy>
+    array<T, Policy>::array(const radann::core::shape &shape, const std::initializer_list<T> &data, bool ad)
         : array(shape, data.begin(), data.end(), ad)
     {}
 
-    template<typename T>
-    array<T>::array(const array &other)
+    template<typename T, typename Policy>
+    array<T, Policy>::array(const array &other)
         : array(other._storage, other._shape, other._offset, other._grad_index, false)
     {}
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T>::array(const radann::core::shape &shape, const expr::base<Expr> &expr, bool ad)
+    array<T, Policy>::array(const radann::core::shape &shape, const expr::base<Expr> &expr, bool ad)
         : cuda::shared_array<T>(shape.length()),
           _shape(shape)
     {
@@ -167,45 +142,45 @@ namespace radann::core
         }
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T>::array(const expr::base<Expr> &expr, bool ad)
+    array<T, Policy>::array(const expr::base<Expr> &expr, bool ad)
         : array(expr.self().shape(), expr, ad)
     {}
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T>::array(const radann::core::shape &shape, const expr::base<Expr> &expr)
+    array<T, Policy>::array(const radann::core::shape &shape, const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr, expr.self().ad())
     {}
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T>::array(const expr::base<Expr> &expr)
+    array<T, Policy>::array(const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename InputIterator>
-    array<T> &array<T>::assign(InputIterator first, InputIterator last)
+    array<T, Policy> &array<T, Policy>::assign(InputIterator first, InputIterator last)
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
-            throw std::invalid_argument("Iterator range exceeds array shape.");
+            throw std::invalid_argument("Iterator range exceeds array_no_ad shape.");
         cuda::host_buffer<T> host { first, last };
         this->_storage->copy_from(host, this->_offset);
         return *this;
     }
 
-    template<typename T>
-    array<T> &array<T>::operator=(const std::initializer_list<T> &data)
+    template<typename T, typename Policy>
+    array<T, Policy> &array<T, Policy>::operator=(const std::initializer_list<T> &data)
     {
         return assign(data.begin(), data.end());
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T> &array<T>::operator=(const expr::base<Expr> &expr)
+    array<T, Policy> &array<T, Policy>::operator=(const expr::base<Expr> &expr)
     {
         auto expr_self = expr.self();
         cuda::assign(this->data(), this->_size, expr::get_access(expr_self));
@@ -217,44 +192,44 @@ namespace radann::core
         return *this;
     }
 
-    template<typename T>
-    array<T> &array<T>::operator=(const array &other)
+    template<typename T, typename Policy>
+    array<T, Policy> &array<T, Policy>::operator=(const array &other)
     {
         if (this == &other)
             return *this;
         return (*this = expr::get_access(other));
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T> &array<T>::operator+=(const expr::base<Expr> &expr)
+    array<T, Policy> &array<T, Policy>::operator+=(const expr::base<Expr> &expr)
     {
         return (*this = *this + expr);
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T> &array<T>::operator-=(const expr::base<Expr> &expr)
+    array<T, Policy> &array<T, Policy>::operator-=(const expr::base<Expr> &expr)
     {
         return (*this = *this - expr);
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T> &array<T>::operator*=(const expr::base<Expr> &expr)
+    array<T, Policy> &array<T, Policy>::operator*=(const expr::base<Expr> &expr)
     {
         return (*this = *this * expr);
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename Expr>
-    array<T> &array<T>::operator/=(const expr::base<Expr> &expr)
+    array<T, Policy> &array<T, Policy>::operator/=(const expr::base<Expr> &expr)
     {
         return (*this = *this / expr);
     }
 
-    template<typename T>
-    array<T> &array<T>::operator>>=(const array &other)
+    /*template<typename T, typename Policy>
+    array_no_ad<T, Policy> &array_no_ad<T, Policy>::operator>>=(const array_no_ad &other)
     {
         if (this == &other)
             return *this;
@@ -265,134 +240,63 @@ namespace radann::core
         _shape = other._shape;
         _grad_index = other._grad_index;
         return *this;
-    }
+    }*/
 
-    template<typename T>
-    size_t array<T>::rank() const
+    template<typename T, typename Policy>
+    size_t array<T, Policy>::rank() const
     {
         return _shape.rank();
     }
 
-    template<typename T>
-    const shape &array<T>::shape() const
+    template<typename T, typename Policy>
+    const shape &array<T, Policy>::shape() const
     {
         return _shape;
     }
 
-    template<typename T>
-    size_t array<T>::shape(size_t i) const
+    template<typename T, typename Policy>
+    size_t array<T, Policy>::shape(size_t i) const
     {
         return _shape[i];
     }
 
-    template<typename T>
-    array<T> array<T>::at(const radann::core::shape &index) const
+    template<typename T, typename Policy>
+    array<T, Policy> array<T, Policy>::at(const radann::core::shape &index) const
     {
         auto extents = _shape.cut(index.rank());
         auto offset = _shape.offset(index);
-        return array<T> { this->_storage, extents, this->_offset + offset, _grad_index };
+        return array<T, Policy> { this->_storage, extents, this->_offset + offset, _grad_index };
     }
 
-    template<typename T>
+    template<typename T, typename Policy>
     template<typename... Indices>
-    array<T> array<T>::operator()(Indices... indices) const
+    array<T, Policy> array<T, Policy>::operator()(Indices... indices) const
     {
         return at(make_shape(indices...));
     }
 
-    template<typename T>
-    array<T> array<T>::reshape(const radann::core::shape &shape) const
+    template<typename T, typename Policy>
+    array<T, Policy> array<T, Policy>::reshape(const radann::core::shape &shape) const
     {
         if (this->_size != shape.length())
             throw std::invalid_argument("Array size mismatch.");
-        return array<T> { this->_storage, shape, this->_offset, _grad_index };
+        return array<T, Policy> { this->_storage, shape, this->_offset, _grad_index };
     }
 
-    template<typename T>
-    array<T> array<T>::flatten(size_t ndims) const
+    template<typename T, typename Policy>
+    array<T, Policy> array<T, Policy>::flatten(size_t ndims) const
     {
-        return array<T> { this->_storage, _shape.flatten(ndims), this->_offset, _grad_index };
+        return array<T, Policy> { this->_storage, _shape.flatten(ndims), this->_offset, _grad_index };
     }
 
-    template<typename T>
-    array<T> array<T>::flatten() const
+    template<typename T, typename Policy>
+    array<T, Policy> array<T, Policy>::flatten() const
     {
         return flatten(rank() - 1);
     }
 
-    template<typename T>
-    bool array<T>::ad() const
-    {
-        return _grad_index.has_value();
-    }
-
-    template<typename T>
-    const std::optional<size_t> &array<T>::grad_index() const
-    {
-        return _grad_index;
-    }
-
-    template<typename T>
-    array<T> array<T>::get_grad() const
-    {
-        if (!ad())
-            throw std::runtime_error("Array is not differentiated.");
-        return diff::get_tape<T>()->get_grad(_grad_index);
-    }
-
-    template<typename T>
-    template<typename Expr>
-    void array<T>::set_grad(const expr::base<Expr> &expr) const
-    {
-        if (!ad())
-            throw std::runtime_error("Array is not differentiated.");
-        diff::get_tape<T>()->set_grad(_grad_index, expr);
-    }
-
-    template<typename T>
-    inline auto make_array(const shape& shape, bool ad)
-    {
-        return array<T> { shape, ad };
-    }
-
-    template<typename InputIterator>
-    inline auto make_array(const shape& shape, InputIterator first, InputIterator last, bool ad)
-    {
-        return array<typename std::iterator_traits<InputIterator>::value_type> { shape, first, last, ad };
-    }
-
-    template<typename T>
-    inline auto make_array(const shape& shape, const std::initializer_list<T>& data, bool ad)
-    {
-        return array<T> { shape, data, ad };
-    }
-
-    template<typename Expr>
-    inline auto make_array(const shape& shape, const expr::base<Expr>& expr)
-    {
-        return array<typename Expr::value_type> { shape, expr };
-    }
-
-    template<typename Expr>
-    inline auto make_array(const expr::base<Expr>& expr)
-    {
-        return array<typename Expr::value_type> { expr };
-    }
-
-    template<typename Expr>
-    inline auto make_array(const shape& shape, const expr::base<Expr>& expr, bool ad)
-    {
-        return array<typename Expr::value_type> { shape, expr, ad };
-    }
-
-    template<typename Expr>
-    inline auto make_array(const expr::base<Expr>& expr, bool ad)
-    {
-        return array<typename Expr::value_type> { expr, ad };
-    }
-
-    template<typename T>
-    std::ostream &operator<<(std::ostream &out, const array<T> &array)
+    template<typename T, typename Policy>
+    std::ostream &operator<<(std::ostream &out, const array<T, Policy> &array)
     {
         auto ad = array.ad() ? "AD = true\n" : "AD = false\n";
 

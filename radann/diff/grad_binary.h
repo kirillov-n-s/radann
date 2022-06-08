@@ -1,115 +1,62 @@
 #pragma once
-#include "../meta/meta.h"
 #include "../func/binary.h"
 #include "../func/unary.h"
 
 namespace radann::diff
 {
-    template<typename Op>
-    struct grad_lhs
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_lhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::add&)
     {
-        static_assert(meta::always_false_v<Op>, "Operator type is not supported.");
-    };
+        return mult.self();
+    }
 
-    template<typename Op>
-    struct grad_rhs
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_rhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::add&)
     {
-        static_assert(meta::always_false_v<Op>, "Operator type is not supported.");
-    };
+        return mult.self();
+    }
 
-    template<>
-    struct grad_lhs<oper::add>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_lhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::sub&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-    };
+        return mult.self();
+    }
 
-    template<>
-    struct grad_rhs<oper::add>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_rhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::sub&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-    };
+        return -mult;
+    }
 
-    template<>
-    struct grad_lhs<oper::sub>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_lhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::mul&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-    };
+        return rhs * mult;
+    }
 
-    template<>
-    struct grad_rhs<oper::sub>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_rhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::mul&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return -mult;
-        }
-    };
+        return lhs * mult;
+    }
 
-    template<>
-    struct grad_lhs<oper::mul>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_lhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::div&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return rhs * mult;
-        }
-    };
+        return mult / rhs;
+    }
 
-    template<>
-    struct grad_rhs<oper::mul>
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_rhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const oper::div&)
     {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return lhs * mult;
-        }
-    };
-
-    template<>
-    struct grad_lhs<oper::div>
-    {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return mult / rhs;
-        }
-    };
-
-    template<>
-    struct grad_rhs<oper::div>
-    {
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto operator()(const expr::base<Lhs> &lhs,
-                        const expr::base<Rhs> &rhs,
-                        const expr::base<Mult> &mult) const
-        {
-            return -lhs / func::pow2(rhs) * mult;
-        }
-    };
+        return -lhs / func::pow2(rhs) * mult;
+    }
 }

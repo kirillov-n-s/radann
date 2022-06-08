@@ -1,6 +1,5 @@
 #include "radann/radann.h"
 #include <chrono>
-#include <iostream>
 
 using timer = std::chrono::system_clock;
 

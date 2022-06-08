@@ -35,7 +35,6 @@ add_executable(coursework main.cu
         radann/func/reduce.h
         radann/meta/meta.h
         radann/core/reduce.h
-        radann/core/default.h
         radann/cuda/prop.h
         radann/diff/tape.h
         radann/diff/tape_context.h
@@ -43,7 +42,16 @@ add_executable(coursework main.cu
         radann/cuda/unique_array.h
         radann/cuda/launch.h
         radann/api/tape.h
-        radann/core/eager.h radann/diff/grad_unary.h radann/diff/grad_binary.h radann/diff/propagate.h radann/diff/is_ad.h radann/diff/aspect.h)
+        radann/core/eager.h
+        radann/diff/grad_unary.h
+        radann/diff/grad_binary.h
+        radann/diff/propagate.h
+        radann/diff/is_ad.h
+        radann/diff/policy_dynamic_ad.h radann/diff/policy_dynamic_ad.cpp
+        radann/diff/backward.h
+        radann/diff/policy_no_ad.h radann/diff/policy_no_ad.cpp
+        radann/api/using.h
+        radann/api/eval.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

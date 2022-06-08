@@ -8,6 +8,7 @@ namespace radann::expr
     {
     public:
         using value_type = typename Seq::value_type;
+        using policy_type = meta::always_same_type;
         static constexpr bool is_expr = true;
 
     private:

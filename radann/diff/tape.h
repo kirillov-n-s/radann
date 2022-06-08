@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
-#include "../expr/base.h"
-//#include "../core/array.h"
+#include "backward.h"
 
 namespace radann::diff
 {
@@ -15,10 +14,11 @@ namespace radann::diff
         std::vector<size_t> _lvalue_indices;
         std::vector<size_t> _last_op_indices;
 
-        std::vector<radann::array<T>*> _multipliers;
+        std::vector<array_no_ad<T>> _multipliers;
         std::vector<size_t> _rvalue_indices;
+        std::vector<backward_function<T>> _backward_functions;
 
-        std::vector<radann::array<T>> _gradients;
+        std::vector<array_no_ad<T>> _gradients;
 
         size_t _next_index = 0;
 
@@ -37,7 +37,7 @@ namespace radann::diff
         template<typename Expr>
         void set_grad(size_t, const expr::base<Expr>&);
 
-        template<typename Expr>
+        template<typename Op, typename Expr>
         void push_rvalue(size_t, const expr::base<Expr>&);
         void push_lvalue(size_t);
 
@@ -82,15 +82,13 @@ namespace radann::diff
     }
 
     template<typename T>
-    template<typename Expr>
+    template<typename Op, typename Expr>
     void tape<T>::push_rvalue(size_t index, const expr::base<Expr> &mult)
     {
-        auto size = _gradients[index]->size();
-        auto array = new cuda::unique_array<T> { size };
-        cuda::assign(array->data(), size, mult.self());
-
+        array_no_ad<T> array { _gradients[index]->shape(), mult };
         _multipliers.push_back(array);
         _rvalue_indices.push_back(index);
+        _backward_functions.push_back(&backward<Op>::function);
     }
 
     template<typename T>
