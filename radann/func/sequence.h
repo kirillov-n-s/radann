@@ -48,3 +48,6 @@ namespace radann::func
         return expr::make_expr(oper::geom<T>(scale, ratio));
     }
 }
+
+using radann::func::operator""_C;
+using radann::func::operator""_fC;

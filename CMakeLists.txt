@@ -4,7 +4,7 @@ project(coursework CUDA)
 set(CMAKE_CUDA_STANDARD 17)
 
 add_executable(coursework main.cu
-        radann/core/shape.h radann/core/shape.cpp
+        radann/core/shape.h
         radann/core/array.h
         radann/cuda/shared_storage.h
         radann/expr/base.h
@@ -39,7 +39,6 @@ add_executable(coursework main.cu
         radann/diff/tape.h
         radann/diff/tape_context.h
         radann/cuda/shared_array.h
-        radann/cuda/unique_array.h
         radann/cuda/launch.h
         radann/api/tape.h
         radann/core/eager.h
@@ -47,11 +46,11 @@ add_executable(coursework main.cu
         radann/diff/grad_binary.h
         radann/diff/propagate.h
         radann/diff/is_ad.h
-        radann/diff/policy_dynamic_ad.h radann/diff/policy_dynamic_ad.cpp
+        radann/diff/policy_dynamic_ad.h
         radann/diff/backward.h
-        radann/diff/policy_no_ad.h radann/diff/policy_no_ad.cpp
+        radann/diff/policy_no_ad.h
         radann/api/using.h
-        radann/api/eval.h)
+        radann/api/eval.h radann/core/default.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

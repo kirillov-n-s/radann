@@ -46,7 +46,7 @@ namespace radann::cuda
     shared_storage<T>::shared_storage(size_t size)
         : _size(size)
     {
-        cudaMalloc(&_data, _size * sizeof(T));
+        cudaMallocManaged(&_data, _size * sizeof(T));
         cudaMemset(_data, 0, _size * sizeof(T));
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
@@ -57,7 +57,7 @@ namespace radann::cuda
     shared_storage<T>::shared_storage(const T *device_ptr, size_t size)
         : _size(size)
     {
-        cudaMalloc(&_data, _size * sizeof(T));
+        cudaMallocManaged(&_data, _size * sizeof(T));
         copy_from(device_ptr, size);
     }
 
@@ -82,7 +82,7 @@ namespace radann::cuda
     {
 
         cudaMemcpy(_data + offset, host.data(), host.size() * sizeof(T),
-                                 cudaMemcpyKind::cudaMemcpyHostToDevice);
+                   cudaMemcpyKind::cudaMemcpyHostToDevice);
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();

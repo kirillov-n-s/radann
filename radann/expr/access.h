@@ -8,7 +8,7 @@ namespace radann::expr
     template<typename T, typename Policy>
     class access :
         public base<access<T, Policy>>,
-        public Policy::record_type
+        public Policy::entry_type
     {
     public:
         using value_type = T;
@@ -20,7 +20,7 @@ namespace radann::expr
         size_t _size;
         core::shape _shape;
 
-        access(const T*, size_t, const core::shape&, const std::optional<size_t>&);
+        access(const T*, size_t, const core::shape&, const typename Policy::index_type&);
 
     public:
         __host__ __device__ inline
@@ -39,8 +39,8 @@ namespace radann::expr
 {
     template<typename T, typename Policy>
     access<T, Policy>::access(const T *data, size_t size, const core::shape &shape,
-                      const std::optional<size_t> &grad_index)
-        : Policy::record_type(grad_index),
+                              const typename Policy::index_type &grad_index)
+        : Policy::entry_type(grad_index),
           _data(data), _size(size), _shape(shape)
     {}
     

@@ -79,3 +79,8 @@ namespace radann::func
         return expr::make_expr(oper::max{}, lhs, rhs);
     }
 }
+
+using radann::func::operator+;
+using radann::func::operator-;
+using radann::func::operator*;
+using radann::func::operator/;

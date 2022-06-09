@@ -8,9 +8,6 @@ namespace radann::cuda
 {
     template <typename T, typename Expr>
     void assign(T*, size_t, const Expr&);
-
-    template <typename T>
-    void reverse_grad(T*, const T*, const T*, size_t, size_t);
 }
 
 namespace radann::cuda
@@ -24,18 +21,5 @@ namespace radann::cuda
         auto status = cudaDeviceSynchronize();
         if (status != cudaSuccess)
             throw std::runtime_error("Assign kernel failed. CUDA error status " + std::to_string(status));
-    }
-
-    template <typename T>
-    void reverse_grad(T *input_grad,
-                      const T *mult, const T *output_grad,
-                      size_t input_size, size_t output_size)
-    {
-        int block_dim, grid_dim;
-        get_launch_parameters(kernel::reverse_grad<T>, input_size, block_dim, grid_dim);
-        kernel::reverse_grad<<<grid_dim, block_dim>>>(input_grad, mult, output_grad, input_size, output_size);
-        auto status = cudaDeviceSynchronize();
-        if (status != cudaSuccess)
-            throw std::runtime_error("Reverse grad kernel failed. CUDA error status " + std::to_string(status));
     }
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include "using.h"
-#include "../diff/tape_context.h"
 
 namespace radann
 {
@@ -19,13 +18,13 @@ namespace radann
     template<typename T>
     void reverse()
     {
-        radann::expr::get_tape<T>()->reverse();
+        radann::diff::get_tape<T>()->reverse();
     }
 
     template<typename T>
     void clear()
     {
-        radann::expr::get_tape<T>()->clear();
+        radann::diff::get_tape<T>()->clear();
     }
 
     template<typename T>

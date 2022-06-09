@@ -37,6 +37,12 @@ namespace radann::meta
         using type = T;
     };
 
+    template<>
+    struct same_type<always_same_type, always_same_type>
+    {
+        using type = always_same_type;
+    };
+
     template<typename T, typename U>
     using same_type_t = typename same_type<T, U>::type;
 }

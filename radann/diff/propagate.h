@@ -12,16 +12,19 @@ namespace radann::diff
     template<typename Op, typename Lhs, typename Rhs, typename Expr>
     void propagate(const expr::binary<Op, Lhs, Rhs>&, const expr::base<Expr>&);
 
+    template<typename Seq, typename Expr>
+    void propagate(const expr::term<Seq>&, const expr::base<Expr>&);
+
     template<typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg>&, const expr::base<Expr>&);
 }
 
 namespace radann::diff
 {
-    template<typename Op, typename T, typename Policy, typename Expr>
+    template<typename T, typename Policy, typename Expr>
     void propagate(const expr::access<T, Policy> &access, const expr::base<Expr> &mult)
     {
-        get_tape<T>()->push_rvalue<Op>(access.grad_index(), mult);
+        get_tape<T>()->push_rvalue(access.grad_index().value(), mult);
     }
 
     template<typename Op, typename Lhs, typename Rhs, typename Expr>
@@ -35,6 +38,9 @@ namespace radann::diff
         if (is_ad(rhs))
             propagate(rhs, grad_rhs(lhs, rhs, mult, op));
     }
+
+    template<typename Seq, typename Expr>
+    void propagate(const expr::term<Seq>&, const expr::base<Expr>&) {}
 
     template<typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg> &unary, const expr::base<Expr> &mult)

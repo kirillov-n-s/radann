@@ -26,6 +26,7 @@ namespace radann::cuda
         cuda::host_buffer<T> host() const;
 
         size_t size() const;
+        size_t offset() const;
     };
 }
 
@@ -87,5 +88,11 @@ namespace radann::cuda
     size_t shared_array<T>::size() const
     {
         return _size;
+    }
+
+    template<typename T>
+    size_t shared_array<T>::offset() const
+    {
+        return _offset;
     }
 }

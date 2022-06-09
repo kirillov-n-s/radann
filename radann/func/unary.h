@@ -250,3 +250,5 @@ namespace radann::func
         return expr::make_expr(oper::pow2{}, arg);
     }
 }
+
+using radann::func::operator-;

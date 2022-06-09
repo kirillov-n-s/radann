@@ -24,71 +24,69 @@ namespace radann::diff
 
         tape() = default;
 
-        size_t push_grad(cuda::shared_array<T>*);
+        size_t push_grad(array_no_ad<T>);
 
     public:
         tape(const tape&) = delete;
         friend class tape_context<T>;
 
-        size_t create_grad(size_t);
-        size_t derive_grad(size_t, size_t, size_t);
+        size_t create_grad(const core::shape&);
+        size_t derive_grad(size_t, const core::shape&, size_t);
 
-        const T* get_grad(size_t) const;
+        array_no_ad<T> get_grad(size_t) const;
         template<typename Expr>
         void set_grad(size_t, const expr::base<Expr>&);
 
-        template<typename Op, typename Expr>
+        template<typename Expr>
         void push_rvalue(size_t, const expr::base<Expr>&);
         void push_lvalue(size_t);
 
         void reverse();
-        void clear();
     };
 }
 
 namespace radann::diff
 {
     template<typename T>
-    size_t tape<T>::push_grad(cuda::shared_array<T> *grad)
+    size_t tape<T>::push_grad(array_no_ad<T> grad)
     {
         _gradients.push_back(grad);
         return _next_index++;
     }
 
     template<typename T>
-    size_t tape<T>::create_grad(size_t size)
+    size_t tape<T>::create_grad(const core::shape &shape)
     {
-        return push_grad(new cuda::shared_array<T>(size));
+        return push_grad(array_no_ad<T> { shape });
     }
 
     template<typename T>
-    size_t tape<T>::derive_grad(size_t base_index, size_t size, size_t offset)
+    size_t tape<T>::derive_grad(size_t base_index, const core::shape &shape, size_t offset)
     {
-        return push_grad(new cuda::shared_array<T>(_gradients[base_index]->storage(), size, offset));
+        return push_grad(array_no_ad<T> { _gradients[base_index].storage(), shape, offset });
     }
 
     template<typename T>
-    const T *tape<T>::get_grad(size_t index) const
+    array_no_ad<T> tape<T>::get_grad(size_t index) const
     {
-        return _gradients[index]->data();
+        return _gradients[index];
     }
 
     template<typename T>
     template<typename Expr>
     void tape<T>::set_grad(size_t index, const expr::base<Expr> &grad)
     {
-        auto grad_array = _gradients[index];
-        cuda::assign(grad_array->data(), grad_array->size(), grad.self());
+        _gradients[index] = grad;
     }
 
     template<typename T>
-    template<typename Op, typename Expr>
+    template<typename Expr>
     void tape<T>::push_rvalue(size_t index, const expr::base<Expr> &mult)
     {
-        array_no_ad<T> array { _gradients[index]->shape(), mult };
+        array_no_ad<T> array { _gradients[index].shape(), mult };
         _multipliers.push_back(array);
         _rvalue_indices.push_back(index);
-        _backward_functions.push_back(&backward<Op>::function);
+        _backward_functions.push_back(&backward<void>::function);
     }
 
     template<typename T>
@@ -105,34 +103,15 @@ namespace radann::diff
         {
             auto output_grad = _gradients[_lvalue_indices[i]];
             for (size_t j = _last_op_indices[i - 1]; j < _last_op_indices[i]; j++)
-            {
-                auto input_grad = _gradients[_rvalue_indices[j]];
-                cuda::reverse_grad(input_grad->data(),
-                                   _multipliers[j]->data(),
-                                   output_grad->data(),
-                                   input_grad->size(),
-                                   output_grad->size());
-            }
+                _backward_functions[j](_gradients[_rvalue_indices[j]],
+                                       output_grad,
+                                       _multipliers[j]);
         }
 
         auto output_grad = _gradients[_lvalue_indices[0]];
         for (size_t j = 0; j < _last_op_indices[0]; j++)
-        {
-            auto input_grad = _gradients[_rvalue_indices[j]];
-            cuda::reverse_grad(input_grad->data(),
-                               _multipliers[j]->data(),
-                               output_grad->data(),
-                               input_grad->size(),
-                               output_grad->size());
-        }
-    }
-
-    template<typename T>
-    void tape<T>::clear()
-    {
-        for (auto& grad : _gradients)
-            delete grad;
-        for (auto& mult : _multipliers)
-            delete mult;
+            _backward_functions[j](_gradients[_rvalue_indices[j]],
+                                   output_grad,
+                                   _multipliers[j]);
     }
 }

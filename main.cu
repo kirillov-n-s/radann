@@ -5,24 +5,25 @@ using timer = std::chrono::system_clock;
 
 int main()
 {
-    auto s = radann::make_shape(1);
+    auto s = radann::make_shape();
 
     auto x0 = radann::make_constant(s, 1.337f);
     auto x1 = radann::make_constant(s, 1.488f);
 
     auto y = radann::make_constant(s, 4.f);
-    auto z = radann::eval(2._fC * x0 + 3._fC * x1 * x1);
+    auto z = radann::make_array(2._fC * x0 + 3._fC * x1 * x1);
     y *= radann::sin(z);
 
     y.set_grad(2._fC);
 
-    radann::reverse();
+    //radann::reverse();
+
+    radann::diff::array_no_ad<radann::real> a { s, 2.28_fC };
+    radann::diff::array_no_ad<radann::real> b = -radann::log(1000._fC);
 
     std::cout << "x0 =\n" << x0 << "dx0 =\n" << x0.get_grad()
               << "x1 =\n" << x1 << "dx1 =\n" << x1.get_grad()
               << "y =\n" << y  << "dy =\n" << y.get_grad();
-
-    radann::clear();
 
     std::cin.get();
 }

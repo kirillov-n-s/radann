@@ -1,9 +1,10 @@
 #pragma once
 #include <iomanip>
 #include "shape.h"
+#include "default.h"
 #include "../cuda/shared_array.h"
 #include "../cuda/assign.h"
-#include "../expr/access.h"
+#include "../diff/is_ad.h"
 
 namespace radann::core
 {
@@ -21,23 +22,27 @@ namespace radann::core
     private:
         shape _shape;
 
-        array(cuda::shared_storage<T>*, const shape&, size_t, const std::optional<size_t>&, bool = true);
-
     public:
-        array(const shape&, bool);
-        template<typename InputIterator>
-        array(const shape&, InputIterator, InputIterator, bool);
-        array(const shape&, const std::initializer_list<T>&, bool);
+        array(cuda::shared_storage<T>*, const core::shape&, size_t,
+              const typename Policy::index_type&, bool = true);
 
-        array(const array&);
+        array(cuda::shared_storage<T>*, const core::shape&, size_t);
+
+        array(const core::shape&, bool = autodiff);
+        template<typename InputIterator>
+        array(const core::shape&, InputIterator, InputIterator, bool = autodiff);
+        array(const core::shape&, const std::initializer_list<T>&, bool = autodiff);
+
+        template<typename OtherPolicy>
+        array(const array<T, OtherPolicy>&);
 
         template<typename Expr>
-        array(const shape&, const expr::base<Expr>&, bool);
+        array(const core::shape&, const expr::base<Expr>&, bool);
         template<typename Expr>
         array(const expr::base<Expr>&, bool);
 
         template<typename Expr>
-        array(const shape&, const expr::base<Expr>&);
+        array(const core::shape&, const expr::base<Expr>&);
         template<typename Expr>
         array(const expr::base<Expr>&);
 
@@ -65,11 +70,11 @@ namespace radann::core
         const shape& shape() const;
         size_t shape(size_t) const;
 
-        array<T, Policy> at(const radann::core::shape&) const;
+        array<T, Policy> at(const core::shape&) const;
         template <typename... Indices>
         array<T, Policy> operator()(Indices...) const;
 
-        array<T, Policy> reshape(const radann::core::shape&) const;
+        array<T, Policy> reshape(const core::shape&) const;
         array<T, Policy> flatten(size_t) const;
         array<T, Policy> flatten() const;
     };
@@ -81,34 +86,33 @@ namespace radann::core
 namespace radann::core
 {
     template<typename T, typename Policy>
-    array<T, Policy>::array(cuda::shared_storage<T> *storage, const radann::core::shape &shape, size_t offset,
-                    const std::optional<size_t>& base_index, bool derive)
+    array<T, Policy>::array(cuda::shared_storage<T> *storage, const core::shape &shape, size_t offset,
+                            const typename Policy::index_type &base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
-          _shape(shape),
-          _grad_index(!base_index.has_value()
-                      ? std::nullopt
-                      : (derive
-                         ? diff::get_tape<T>()->derive_grad(base_index.value(), shape, offset)
-                         : base_index))
+          Policy(shape, offset, base_index, derive),
+          _shape(shape)
     {}
 
     template<typename T, typename Policy>
-    array<T, Policy>::array(const radann::core::shape &shape, bool ad)
+    array<T, Policy>::array(cuda::shared_storage <T> *storage, const core::shape &shape, size_t offset)
+        : cuda::shared_array<T>(storage, shape.length(), offset),
+          Policy(),
+          _shape(shape)
+    {}
+
+    template<typename T, typename Policy>
+    array<T, Policy>::array(const core::shape &shape, bool ad)
         : cuda::shared_array<T>(shape.length()),
-          _shape(shape),
-          _grad_index(ad
-                      ? diff::get_tape<T>()->create_grad(shape)
-                      : std::nullopt)
+          Policy(shape, ad),
+          _shape(shape)
     {}
 
     template<typename T, typename Policy>
     template<typename InputIterator>
-    array<T, Policy>::array(const radann::core::shape &shape, InputIterator first, InputIterator last, bool ad)
+    array<T, Policy>::array(const core::shape &shape, InputIterator first, InputIterator last, bool ad)
         : cuda::shared_array<T>(shape.length()),
-          _shape(shape),
-          _grad_index(ad
-                      ? diff::get_tape<T>()->create_grad(shape)
-                      : std::nullopt)
+          Policy(shape, ad),
+          _shape(shape)
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
@@ -118,28 +122,27 @@ namespace radann::core
     }
 
     template<typename T, typename Policy>
-    array<T, Policy>::array(const radann::core::shape &shape, const std::initializer_list<T> &data, bool ad)
+    array<T, Policy>::array(const core::shape &shape, const std::initializer_list<T> &data, bool ad)
         : array(shape, data.begin(), data.end(), ad)
     {}
 
     template<typename T, typename Policy>
-    array<T, Policy>::array(const array &other)
-        : array(other._storage, other._shape, other._offset, other._grad_index, false)
+    template<typename OtherPolicy>
+    array<T, Policy>::array(const array<T, OtherPolicy> &other)
+        : array(other.storage(), other.shape(), other.offset(), other.grad_index(), false)
     {}
 
     template<typename T, typename Policy>
     template<typename Expr>
-    array<T, Policy>::array(const radann::core::shape &shape, const expr::base<Expr> &expr, bool ad)
+    array<T, Policy>::array(const core::shape &shape, const expr::base<Expr> &expr, bool ad)
         : cuda::shared_array<T>(shape.length()),
+          Policy(shape, ad),
           _shape(shape)
     {
-        cuda::assign(this->data(), this->_size, expr::get_access(expr.self()));
-        if (ad)
-        {
-            _grad_index = diff::get_tape<T>()->create_grad(shape);
-            expr.self().propagate_grad(constant<T>(1));
-            diff::get_tape<T>()->push_lvalue(_grad_index);
-        }
+        auto access = expr::get_access(expr.self());
+        cuda::assign(this->data(), this->_size, access);
+        if constexpr(Policy::has_record)
+            this->record_grad(access);
     }
 
     template<typename T, typename Policy>
@@ -150,8 +153,8 @@ namespace radann::core
 
     template<typename T, typename Policy>
     template<typename Expr>
-    array<T, Policy>::array(const radann::core::shape &shape, const expr::base<Expr> &expr)
-        : array(expr.self().shape(), expr, expr.self().ad())
+    array<T, Policy>::array(const core::shape &shape, const expr::base<Expr> &expr)
+        : array(expr.self().shape(), expr, diff::is_ad(expr.self()))
     {}
 
     template<typename T, typename Policy>
@@ -182,13 +185,10 @@ namespace radann::core
     template<typename Expr>
     array<T, Policy> &array<T, Policy>::operator=(const expr::base<Expr> &expr)
     {
-        auto expr_self = expr.self();
-        cuda::assign(this->data(), this->_size, expr::get_access(expr_self));
-        if (expr_self.ad() && ad())
-        {
-            expr_self.propagate_grad(constant<T>(1));
-            diff::get_tape<T>()->push_lvalue(_grad_index.value());
-        }
+        auto access = expr::get_access(expr.self());
+        cuda::assign(this->data(), this->_size, access);
+        if constexpr(Policy::has_record)
+            this->record_grad(access);
         return *this;
     }
 
@@ -298,8 +298,6 @@ namespace radann::core
     template<typename T, typename Policy>
     std::ostream &operator<<(std::ostream &out, const array<T, Policy> &array)
     {
-        auto ad = array.ad() ? "AD = true\n" : "AD = false\n";
-
         const auto host = array.host();
         const auto data = host.data();
         const auto storage = array.storage();
@@ -311,8 +309,13 @@ namespace radann::core
             << std::showpos;*/
 
         out << "0x" << storage->data() << '\n'
-            << "nrefs = " << storage->nrefs() << '\n'
-            << ad;
+            << "nrefs = " << storage->nrefs() << '\n';
+
+        if (array.ad())
+            out << "autodiff = true\n"
+                << "gradient index = " << array.grad_index().value() << '\n';
+        else
+            out << "autodiff = false\n";
 
         auto rank = array.rank();
         if (rank == 0)
