@@ -50,7 +50,7 @@ add_executable(coursework main.cu
         radann/diff/backward.h
         radann/diff/policy_no_ad.h
         radann/api/using.h
-        radann/api/eval.h radann/core/default.h)
+        radann/api/eval.h radann/core/default.h radann/diff/entry.h)
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

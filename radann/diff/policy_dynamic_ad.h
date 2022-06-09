@@ -1,31 +1,16 @@
 #pragma once
-#include <optional>
 #include "propagate.h"
+#include "entry.h"
 
 namespace radann::diff
 {
-    class entry_dynamic_ad
-    {
-    public:
-        using index_type = std::optional<size_t>;
-
-    private:
-        index_type _index;
-
-    public:
-        entry_dynamic_ad(const index_type& = std::nullopt);
-
-        bool ad() const;
-        const index_type& grad_index() const;
-    };
-
     template<typename T>
-    class policy_dynamic_ad : public entry_dynamic_ad
+    class policy_dynamic_ad : public entry
     {
     public:
-        using entry_type = entry_dynamic_ad;
+        using entry_type = entry;
         using entry_type::index_type;
-        static constexpr bool has_record = true;
+        static constexpr bool does_record = true;
 
     private:
         index_type::value_type grad_index_value() const;
@@ -47,20 +32,6 @@ namespace radann::diff
 
 namespace radann::diff
 {
-    entry_dynamic_ad::entry_dynamic_ad(const index_type &index)
-            : _index(index)
-    {}
-
-    bool entry_dynamic_ad::ad() const
-    {
-        return _index.has_value();
-    }
-
-    const entry_dynamic_ad::index_type &entry_dynamic_ad::grad_index() const
-    {
-        return _index;
-    }
-
     template<typename T>
     policy_dynamic_ad<T>::index_type::value_type policy_dynamic_ad<T>::grad_index_value() const
     {
@@ -69,24 +40,24 @@ namespace radann::diff
 
     template<typename T>
     policy_dynamic_ad<T>::policy_dynamic_ad()
-        : entry_dynamic_ad()
+        : entry()
     {}
 
     template<typename T>
     policy_dynamic_ad<T>::policy_dynamic_ad(const core::shape &shape, bool ad)
-        : entry_dynamic_ad(ad
-                           ? std::optional { diff::get_tape<T>()->create_grad(shape) }
-                           : std::nullopt)
+        : entry(ad
+                ? index_type { diff::get_tape<T>()->create_grad(shape) }
+                : index_type {})
     {}
 
     template<typename T>
     policy_dynamic_ad<T>::policy_dynamic_ad(const core::shape &shape, size_t offset,
                                             const index_type &base_index, bool derive)
-        : entry_dynamic_ad(!base_index.has_value()
-                           ? std::nullopt
-                           : (derive
-                              ? std::optional { diff::get_tape<T>()->derive_grad(base_index.value(), shape, offset) }
-                              : base_index))
+        : entry(!base_index.has_value()
+                ? index_type {}
+                : (derive
+                   ? index_type { diff::get_tape<T>()->derive_grad(base_index.value(), shape, offset) }
+                   : base_index))
     {}
 
     template<typename T>

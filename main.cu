@@ -12,18 +12,16 @@ int main()
 
     auto y = radann::make_constant(s, 4.f);
     auto z = radann::make_array(2._fC * x0 + 3._fC * x1 * x1);
-    y *= radann::sin(z);
+    z += radann::log(z * z);
+    y *= radann::sin(z / y);
 
     y.set_grad(2._fC);
 
-    //radann::reverse();
+    radann::reverse();
 
-    radann::diff::array_no_ad<radann::real> a { s, 2.28_fC };
-    radann::diff::array_no_ad<radann::real> b = -radann::log(1000._fC);
-
-    std::cout << "x0 =\n" << x0 << "dx0 =\n" << x0.get_grad()
-              << "x1 =\n" << x1 << "dx1 =\n" << x1.get_grad()
-              << "y =\n" << y  << "dy =\n" << y.get_grad();
+    std::cout << "dx0 =\n" << x0.get_grad()
+              << "dx1 =\n" << x1.get_grad()
+              << "y =\n" << y;
 
     std::cin.get();
 }

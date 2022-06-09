@@ -101,14 +101,16 @@ namespace radann::diff
     {
         for (size_t i = _lvalue_indices.size() - 1; i > 0; i--)
         {
-            auto output_grad = _gradients[_lvalue_indices[i]];
+            array_no_ad<T> output_grad = expr::get_access(_gradients[_lvalue_indices[i]]);
+            _gradients[_lvalue_indices[i]] = func::constant<T>(0);
             for (size_t j = _last_op_indices[i - 1]; j < _last_op_indices[i]; j++)
                 _backward_functions[j](_gradients[_rvalue_indices[j]],
                                        output_grad,
                                        _multipliers[j]);
         }
 
-        auto output_grad = _gradients[_lvalue_indices[0]];
+        array_no_ad<T> output_grad = expr::get_access(_gradients[_lvalue_indices[0]]);
+        _gradients[_lvalue_indices[0]] = func::constant<T>(0);
         for (size_t j = 0; j < _last_op_indices[0]; j++)
             _backward_functions[j](_gradients[_rvalue_indices[j]],
                                    output_grad,

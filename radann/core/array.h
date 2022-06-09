@@ -141,7 +141,7 @@ namespace radann::core
     {
         auto access = expr::get_access(expr.self());
         cuda::assign(this->data(), this->_size, access);
-        if constexpr(Policy::has_record)
+        if constexpr(Policy::does_record)
             this->record_grad(access);
     }
 
@@ -186,9 +186,9 @@ namespace radann::core
     array<T, Policy> &array<T, Policy>::operator=(const expr::base<Expr> &expr)
     {
         auto access = expr::get_access(expr.self());
-        cuda::assign(this->data(), this->_size, access);
-        if constexpr(Policy::has_record)
+        if constexpr(Policy::does_record)
             this->record_grad(access);
+        cuda::assign(this->data(), this->_size, access);
         return *this;
     }
 

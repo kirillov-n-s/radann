@@ -24,7 +24,7 @@ namespace radann::expr
 
     public:
         __host__ __device__ inline
-        T operator[](size_t i) const;
+        T operator[](size_t) const;
 
         size_t rank() const;
         auto shape() const;
