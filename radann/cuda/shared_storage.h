@@ -71,7 +71,7 @@ namespace radann::cuda
     void shared_storage<T>::copy_from(const T *device_ptr, size_t size, size_t offset)
     {
         cudaMemcpy(_data + offset, device_ptr, size * sizeof(T),
-                                 cudaMemcpyKind::cudaMemcpyDeviceToDevice);
+                   cudaMemcpyKind::cudaMemcpyDeviceToDevice);
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();

@@ -13,7 +13,6 @@ namespace radann::diff
     template<typename Arg, typename Mult>
     auto grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult, const oper::sin&)
     {
-        auto a = arg.self(); auto m = mult.self();
         return func::cos(arg) * mult;
     }
 
@@ -27,5 +26,18 @@ namespace radann::diff
     auto grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult, const oper::log&)
     {
         return mult / arg;
+    }
+
+    template<typename Arg, typename Mult>
+    auto grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult, const oper::exp&)
+    {
+        return func::exp(arg) * mult;
+    }
+
+    template<typename Arg, typename Mult>
+    auto grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult, const oper::sigmoid&)
+    {
+        auto e = func::exp(-arg);
+        return e / func::pow2(func::constant<typename Arg::value_type>(1) + e) * mult;
     }
 }

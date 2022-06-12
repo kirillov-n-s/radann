@@ -1,22 +1,48 @@
 #pragma once
-#include "../core/array.h"
-#include "policy_no_ad.h"
+#include "../func/linalg.h"
+#include "strategy_no_ad.h"
 
 namespace radann::diff
 {
     template<typename T>
-    using array_no_ad = core::array<T, policy_no_ad>;
+    using array_no_ad = core::array<T, strategy_no_ad>;
 
     template<typename T>
-    using backward_function = void(*)(array_no_ad<T>, const array_no_ad<T>, const array_no_ad<T>);
+    using backward_function = void(*)(array_no_ad<T>&, const array_no_ad<T>&, const array_no_ad<T>&);
 
-    template<typename Op>
+    struct backward_default
+    {
+        using backward_lhs = backward_default;
+        using backward_rhs = backward_default;
+    };
+
+    template<typename Tag>
     struct backward
     {
         template<typename T>
-        static void function(array_no_ad<T> output, const array_no_ad<T> input, const array_no_ad<T> mult)
+        static void function(array_no_ad<T>& dx, const array_no_ad<T>& dy, const array_no_ad<T>& mult)
         {
-            output += mult * input;
+            dx += mult * dy;
+        }
+    };
+
+    template<>
+    struct backward<typename core::matmul<false, false>::backward_lhs>
+    {
+        template<typename T>
+        static void function(array_no_ad<T>& dx, const array_no_ad<T>& dy, const array_no_ad<T>& mult)
+        {
+            dx += func::matmul<false, true>(dy, mult);
+        }
+    };
+
+    template<>
+    struct backward<typename core::matmul<false, false>::backward_rhs>
+    {
+        template<typename T>
+        static void function(array_no_ad<T>& dx, const array_no_ad<T>& dy, const array_no_ad<T>& mult)
+        {
+            dx += func::matmul<true, false>(mult, dy);
         }
     };
 }

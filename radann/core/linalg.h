@@ -4,7 +4,7 @@
 
 namespace radann::core
 {
-    struct dot
+    /*struct dot
     {
         static constexpr bool requires_validation = true;
 
@@ -37,58 +37,64 @@ namespace radann::core
             cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
             return res;
         }
-    };
+    };*/
 
     template<bool LTrans, bool RTrans>
     struct matmul
     {
-        static constexpr bool requires_validation = true;
+        struct backward_lhs {};
+        struct backward_rhs {};
+
+        static constexpr bool does_validate = true;
 
         template<typename Lhs, typename Rhs>
         void validate(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs) const
         {
-            static_assert(!RTrans || Rhs::rank == 2, "Non-matrix transposition attempt in matrix multiplication.");
-            if (lhs.self().shape(!LTrans) != rhs.self().shape(RTrans))
-                throw std::invalid_argument("Shape mismatch in matrix multiplication.");
+            auto lself = lhs.self();
+            auto rself = rhs.self();
+
+            auto lrank = lself.rank();
+            auto rrank = rself.rank();
+
+            auto lcols = lself.shape(!LTrans);
+            auto rrows = rself.shape(RTrans);
+
+            if (lrank > 2 || rrank > lrank || rrank < 1 || lcols != rrows)
+                throw std::invalid_argument("Illegal shape in matrix multiplication.");
         }
 
-        template <bool ADLhs, bool ADRhs, typename T>
-        auto operator()(const array<2, ADLhs, T> &x, const array<1, ADRhs, T> &y) const
+        template <typename T, typename Strategy>
+        auto operator()(const array<T, Strategy> &x, const array<T, Strategy> &y) const
         {
-            auto res = make_array<ADLhs || ADRhs, T>(make_shape(x.shape(LTrans)));
-            cuda::cublas::gemv<LTrans>(x.data(), y.data(), res.data(), x.shape(0), x.shape(1));
-            return res;
-        }
+            auto xrank = x.rank();
+            auto yrank = y.rank();
 
-        template <bool ADLhs, bool ADRhs, typename T>
-        auto operator()(const array<2, ADLhs, T> &x, const array<2, ADRhs, T> &y) const
-        {
+            if (xrank > yrank)
+            {
+                auto res = array<T, Strategy> { make_shape(x.shape(LTrans)) };
+                cuda::cublas::gemv<LTrans>(x.data(), y.data(), res.data(), x.shape(0), x.shape(1));
+                return res;
+            }
+
+            if (xrank == 1)
+            {
+                auto rows = x.size();
+                auto cols = y.size();
+                auto res = array<T, Strategy> { make_shape(rows, cols) };
+                cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
+                return res;
+            }
+
             auto rows = x.shape(LTrans);
+            auto mid = x.shape(!LTrans);
             auto cols = y.shape(!RTrans);
-            auto res = make_array<ADLhs || ADRhs, T>(make_shape(rows, cols));
-            cuda::cublas::gemm<LTrans, RTrans>(x.data(), y.data(), res.data(),
-                                               rows, x.shape(!LTrans), cols);
+            auto res = array<T, Strategy> { make_shape(rows, cols) };
+            cuda::cublas::gemm<LTrans, RTrans>(x.data(), y.data(), res.data(), rows, mid, cols);
             return res;
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_lhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
-        }
-
-        template<typename Lhs, typename Rhs, typename Mult>
-        auto accumulate_grad_rhs(const expr::base<Lhs> &lhs,
-                                 const expr::base<Rhs> &rhs,
-                                 const expr::base<Mult> &mult) const
-        {
-            return mult.self();
         }
     };
 
-    struct trans
+    /*struct trans
     {
         static constexpr bool requires_validation = false;
 
@@ -101,5 +107,5 @@ namespace radann::core
             cuda::cublas::geam(x.data(), res.data(), rows, cols);
             return res;
         }
-    };
+    };*/
 }

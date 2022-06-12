@@ -1,6 +1,7 @@
 #pragma once
 #include "../func/binary.h"
 #include "../func/unary.h"
+#include "../func/linalg.h"
 
 namespace radann::diff
 {
@@ -58,5 +59,19 @@ namespace radann::diff
                   const oper::div&)
     {
         return -lhs / func::pow2(rhs) * mult;
+    }
+
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_lhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const core::matmul<false, false>&)
+    {
+        return rhs * mult;
+    }
+
+    template<typename Lhs, typename Rhs, typename Mult>
+    auto grad_rhs(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs, const expr::base<Mult> &mult,
+                  const core::matmul<false, false>&)
+    {
+        return lhs * mult;
     }
 }

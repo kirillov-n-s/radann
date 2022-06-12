@@ -37,7 +37,7 @@ namespace radann::diff
         template<typename Expr>
         void set_grad(size_t, const expr::base<Expr>&);
 
-        template<typename Expr>
+        template<typename Tag, typename Expr>
         void push_rvalue(size_t, const expr::base<Expr>&);
         void push_lvalue(size_t);
 
@@ -63,7 +63,8 @@ namespace radann::diff
     template<typename T>
     size_t tape<T>::derive_grad(size_t base_index, const core::shape &shape, size_t offset)
     {
-        return push_grad(array_no_ad<T> { _gradients[base_index].storage(), shape, offset });
+        auto& base = _gradients[base_index];
+        return push_grad(array_no_ad<T> { base.storage(), shape, offset, base.grad_index() });
     }
 
     template<typename T>
@@ -80,13 +81,13 @@ namespace radann::diff
     }
 
     template<typename T>
-    template<typename Expr>
+    template<typename Tag, typename Expr>
     void tape<T>::push_rvalue(size_t index, const expr::base<Expr> &mult)
     {
         array_no_ad<T> array { _gradients[index].shape(), mult };
         _multipliers.push_back(array);
         _rvalue_indices.push_back(index);
-        _backward_functions.push_back(&backward<void>::function);
+        _backward_functions.push_back(&backward<Tag>::function);
     }
 
     template<typename T>

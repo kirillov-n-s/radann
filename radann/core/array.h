@@ -8,15 +8,15 @@
 
 namespace radann::core
 {
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     class array :
-        public expr::base<array<T, Policy>>,
+        public expr::base<array<T, Strategy>>,
         public cuda::shared_array<T>,
-        public Policy
+        public Strategy
     {
     public:
         using value_type = T;
-        using policy_type = Policy;
+        using strategy_type = Strategy;
         static constexpr bool is_expr = false;
 
     private:
@@ -24,17 +24,17 @@ namespace radann::core
 
     public:
         array(cuda::shared_storage<T>*, const core::shape&, size_t,
-              const typename Policy::index_type&, bool = true);
-
-        array(cuda::shared_storage<T>*, const core::shape&, size_t);
+              const typename Strategy::index_type&, bool = true);
+        //array(cuda::shared_storage<T>*, const core::shape&, size_t);
+        array(const T*, const core::shape&, bool = autodiff);
 
         array(const core::shape&, bool = autodiff);
         template<typename InputIterator>
         array(const core::shape&, InputIterator, InputIterator, bool = autodiff);
         array(const core::shape&, const std::initializer_list<T>&, bool = autodiff);
 
-        template<typename OtherPolicy>
-        array(const array<T, OtherPolicy>&);
+        template<typename OtherStrategy>
+        array(const array<T, OtherStrategy>&);
 
         template<typename Expr>
         array(const core::shape&, const expr::base<Expr>&, bool);
@@ -70,48 +70,61 @@ namespace radann::core
         const shape& shape() const;
         size_t shape(size_t) const;
 
-        array<T, Policy> at(const core::shape&) const;
+        array<T, Strategy> at(const core::shape&) const;
         template <typename... Indices>
-        array<T, Policy> operator()(Indices...) const;
+        array<T, Strategy> operator()(Indices...) const;
 
-        array<T, Policy> reshape(const core::shape&) const;
-        array<T, Policy> flatten(size_t) const;
-        array<T, Policy> flatten() const;
+        array<T, Strategy> reshape(const core::shape&) const;
+        array<T, Strategy> flatten(size_t) const;
+        array<T, Strategy> flatten() const;
+
+        template<typename Op, typename Arg>
+        friend auto eager(const Op&, const expr::base<Arg>&);
+
+        template <typename Op, typename Lhs, typename Rhs>
+        friend auto eager(const Op&, const expr::base<Lhs>&, const expr::base<Rhs>&);
     };
 
-    template<typename T, typename Policy>
-    std::ostream& operator<<(std::ostream&, const array<T, Policy>&);
+    template<typename T, typename Strategy>
+    std::ostream& operator<<(std::ostream&, const array<T, Strategy>&);
 }
 
 namespace radann::core
 {
-    template<typename T, typename Policy>
-    array<T, Policy>::array(cuda::shared_storage<T> *storage, const core::shape &shape, size_t offset,
-                            const typename Policy::index_type &base_index, bool derive)
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(cuda::shared_storage<T> *storage, const core::shape &shape, size_t offset,
+                              const typename Strategy::index_type &base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
-          Policy(shape, offset, base_index, derive),
+          Strategy(shape, offset, base_index, derive),
           _shape(shape)
     {}
 
-    template<typename T, typename Policy>
-    array<T, Policy>::array(cuda::shared_storage <T> *storage, const core::shape &shape, size_t offset)
+    /*template<typename T, typename Strategy>
+    array<T, Strategy>::array(cuda::shared_storage <T> *storage, const core::shape &shape, size_t offset)
         : cuda::shared_array<T>(storage, shape.length(), offset),
-          Policy(),
+          Strategy(),
+          _shape(shape)
+    {}*/
+
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(const T *device_ptr, const core::shape &shape, bool ad)
+        : cuda::shared_array<T>(device_ptr, shape.length()),
+          Strategy(shape, ad),
           _shape(shape)
     {}
 
-    template<typename T, typename Policy>
-    array<T, Policy>::array(const core::shape &shape, bool ad)
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(const core::shape &shape, bool ad)
         : cuda::shared_array<T>(shape.length()),
-          Policy(shape, ad),
+          Strategy(shape, ad),
           _shape(shape)
     {}
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename InputIterator>
-    array<T, Policy>::array(const core::shape &shape, InputIterator first, InputIterator last, bool ad)
+    array<T, Strategy>::array(const core::shape &shape, InputIterator first, InputIterator last, bool ad)
         : cuda::shared_array<T>(shape.length()),
-          Policy(shape, ad),
+          Strategy(shape, ad),
           _shape(shape)
     {
         auto dist = std::distance(first, last);
@@ -121,51 +134,51 @@ namespace radann::core
         this->_storage->copy_from(host);
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy>::array(const core::shape &shape, const std::initializer_list<T> &data, bool ad)
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(const core::shape &shape, const std::initializer_list<T> &data, bool ad)
         : array(shape, data.begin(), data.end(), ad)
     {}
 
-    template<typename T, typename Policy>
-    template<typename OtherPolicy>
-    array<T, Policy>::array(const array<T, OtherPolicy> &other)
+    template<typename T, typename Strategy>
+    template<typename OtherStrategy>
+    array<T, Strategy>::array(const array<T, OtherStrategy> &other)
         : array(other.storage(), other.shape(), other.offset(), other.grad_index(), false)
     {}
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy>::array(const core::shape &shape, const expr::base<Expr> &expr, bool ad)
+    array<T, Strategy>::array(const core::shape &shape, const expr::base<Expr> &expr, bool ad)
         : cuda::shared_array<T>(shape.length()),
-          Policy(shape, ad),
+          Strategy(shape, ad),
           _shape(shape)
     {
         auto access = expr::get_access(expr.self());
         cuda::assign(this->data(), this->_size, access);
-        if constexpr(Policy::does_record)
+        if constexpr(Strategy::does_record)
             this->record_grad(access);
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy>::array(const expr::base<Expr> &expr, bool ad)
+    array<T, Strategy>::array(const expr::base<Expr> &expr, bool ad)
         : array(expr.self().shape(), expr, ad)
     {}
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy>::array(const core::shape &shape, const expr::base<Expr> &expr)
+    array<T, Strategy>::array(const core::shape &shape, const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr, diff::is_ad(expr.self()))
     {}
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy>::array(const expr::base<Expr> &expr)
+    array<T, Strategy>::array(const expr::base<Expr> &expr)
         : array(expr.self().shape(), expr)
     {}
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename InputIterator>
-    array<T, Policy> &array<T, Policy>::assign(InputIterator first, InputIterator last)
+    array<T, Strategy> &array<T, Strategy>::assign(InputIterator first, InputIterator last)
     {
         auto dist = std::distance(first, last);
         if (dist > this->_size)
@@ -175,61 +188,61 @@ namespace radann::core
         return *this;
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> &array<T, Policy>::operator=(const std::initializer_list<T> &data)
+    template<typename T, typename Strategy>
+    array<T, Strategy> &array<T, Strategy>::operator=(const std::initializer_list<T> &data)
     {
         return assign(data.begin(), data.end());
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy> &array<T, Policy>::operator=(const expr::base<Expr> &expr)
+    array<T, Strategy> &array<T, Strategy>::operator=(const expr::base<Expr> &expr)
     {
         auto access = expr::get_access(expr.self());
-        if constexpr(Policy::does_record)
+        if constexpr(Strategy::does_record)
             this->record_grad(access);
         cuda::assign(this->data(), this->_size, access);
         return *this;
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> &array<T, Policy>::operator=(const array &other)
+    template<typename T, typename Strategy>
+    array<T, Strategy> &array<T, Strategy>::operator=(const array &other)
     {
         if (this == &other)
             return *this;
         return (*this = expr::get_access(other));
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy> &array<T, Policy>::operator+=(const expr::base<Expr> &expr)
+    array<T, Strategy> &array<T, Strategy>::operator+=(const expr::base<Expr> &expr)
     {
         return (*this = *this + expr);
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy> &array<T, Policy>::operator-=(const expr::base<Expr> &expr)
+    array<T, Strategy> &array<T, Strategy>::operator-=(const expr::base<Expr> &expr)
     {
         return (*this = *this - expr);
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy> &array<T, Policy>::operator*=(const expr::base<Expr> &expr)
+    array<T, Strategy> &array<T, Strategy>::operator*=(const expr::base<Expr> &expr)
     {
         return (*this = *this * expr);
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename Expr>
-    array<T, Policy> &array<T, Policy>::operator/=(const expr::base<Expr> &expr)
+    array<T, Strategy> &array<T, Strategy>::operator/=(const expr::base<Expr> &expr)
     {
         return (*this = *this / expr);
     }
 
-    /*template<typename T, typename Policy>
-    array_no_ad<T, Policy> &array_no_ad<T, Policy>::operator>>=(const array_no_ad &other)
+    /*template<typename T, typename Strategy>
+    array_no_ad<T, Strategy> &array_no_ad<T, Strategy>::operator>>=(const array_no_ad &other)
     {
         if (this == &other)
             return *this;
@@ -242,61 +255,61 @@ namespace radann::core
         return *this;
     }*/
 
-    template<typename T, typename Policy>
-    size_t array<T, Policy>::rank() const
+    template<typename T, typename Strategy>
+    size_t array<T, Strategy>::rank() const
     {
         return _shape.rank();
     }
 
-    template<typename T, typename Policy>
-    const shape &array<T, Policy>::shape() const
+    template<typename T, typename Strategy>
+    const shape &array<T, Strategy>::shape() const
     {
         return _shape;
     }
 
-    template<typename T, typename Policy>
-    size_t array<T, Policy>::shape(size_t i) const
+    template<typename T, typename Strategy>
+    size_t array<T, Strategy>::shape(size_t i) const
     {
         return _shape[i];
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> array<T, Policy>::at(const radann::core::shape &index) const
+    template<typename T, typename Strategy>
+    array<T, Strategy> array<T, Strategy>::at(const radann::core::shape &index) const
     {
         auto extents = _shape.cut(index.rank());
         auto offset = _shape.offset(index);
-        return array<T, Policy> { this->_storage, extents, this->_offset + offset, _grad_index };
+        return array<T, Strategy> { this->_storage, extents, this->_offset + offset, this->grad_index() };
     }
 
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     template<typename... Indices>
-    array<T, Policy> array<T, Policy>::operator()(Indices... indices) const
+    array<T, Strategy> array<T, Strategy>::operator()(Indices... indices) const
     {
         return at(make_shape(indices...));
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> array<T, Policy>::reshape(const radann::core::shape &shape) const
+    template<typename T, typename Strategy>
+    array<T, Strategy> array<T, Strategy>::reshape(const radann::core::shape &shape) const
     {
         if (this->_size != shape.length())
             throw std::invalid_argument("Array size mismatch.");
-        return array<T, Policy> { this->_storage, shape, this->_offset, _grad_index };
+        return array<T, Strategy> { this->_storage, shape, this->_offset, this->grad_index() };
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> array<T, Policy>::flatten(size_t ndims) const
+    template<typename T, typename Strategy>
+    array<T, Strategy> array<T, Strategy>::flatten(size_t ndims) const
     {
-        return array<T, Policy> { this->_storage, _shape.flatten(ndims), this->_offset, _grad_index };
+        return array<T, Strategy> { this->_storage, _shape.flatten(ndims), this->_offset, this->grad_index() };
     }
 
-    template<typename T, typename Policy>
-    array<T, Policy> array<T, Policy>::flatten() const
+    template<typename T, typename Strategy>
+    array<T, Strategy> array<T, Strategy>::flatten() const
     {
         return flatten(rank() - 1);
     }
 
-    template<typename T, typename Policy>
-    std::ostream &operator<<(std::ostream &out, const array<T, Policy> &array)
+    template<typename T, typename Strategy>
+    std::ostream &operator<<(std::ostream &out, const array<T, Strategy> &array)
     {
         const auto host = array.host();
         const auto data = host.data();

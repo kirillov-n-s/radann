@@ -3,7 +3,7 @@
 
 namespace radann::diff
 {
-    class policy_no_ad : public entry
+    class strategy_no_ad : public entry
     {
     public:
         using entry_type = entry;
@@ -12,6 +12,6 @@ namespace radann::diff
 
     protected:
         template<typename... Types>
-        policy_no_ad(Types...) {}
+        strategy_no_ad(Types...) {}
     };
 }

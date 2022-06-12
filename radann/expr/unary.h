@@ -8,7 +8,7 @@ namespace radann::expr
     {
     public:
         using value_type = typename Arg::value_type;
-        using policy_type = typename Arg::policy_type;
+        using strategy_type = typename Arg::strategy_type;
         static constexpr bool is_expr = true;
 
     private:

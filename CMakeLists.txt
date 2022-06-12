@@ -28,7 +28,6 @@ add_executable(coursework main.cu
         radann/cuda/cublas.h
         radann/cuda/cusolver.h
         radann/api/creation.h
-        radann/core/eval.h
         radann/cuda/host_buffer.h
         radann/core/linalg.h
         radann/cuda/reduce.h
@@ -46,9 +45,9 @@ add_executable(coursework main.cu
         radann/diff/grad_binary.h
         radann/diff/propagate.h
         radann/diff/is_ad.h
-        radann/diff/policy_dynamic_ad.h
+        radann/diff/strategy_dynamic_ad.h
         radann/diff/backward.h
-        radann/diff/policy_no_ad.h
+        radann/diff/strategy_no_ad.h
         radann/api/using.h
         radann/api/eval.h radann/core/default.h radann/diff/entry.h)
 

@@ -6,46 +6,46 @@
 
 namespace radann::diff
 {
-    template<typename Op, typename T, typename Policy, typename Expr>
-    void propagate(const expr::access<T, Policy>&, const expr::base<Expr>&);
+    template<typename Tag, typename T, typename Strategy, typename Expr>
+    void propagate(const expr::access<T, Strategy>&, const expr::base<Expr>&);
 
-    template<typename Op, typename Lhs, typename Rhs, typename Expr>
+    template<typename Tag, typename Op, typename Lhs, typename Rhs, typename Expr>
     void propagate(const expr::binary<Op, Lhs, Rhs>&, const expr::base<Expr>&);
 
-    template<typename Seq, typename Expr>
+    template<typename Tag, typename Seq, typename Expr>
     void propagate(const expr::term<Seq>&, const expr::base<Expr>&);
 
-    template<typename Op, typename Arg, typename Expr>
+    template<typename Tag, typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg>&, const expr::base<Expr>&);
 }
 
 namespace radann::diff
 {
-    template<typename T, typename Policy, typename Expr>
-    void propagate(const expr::access<T, Policy> &access, const expr::base<Expr> &mult)
+    template<typename Tag, typename T, typename Strategy, typename Expr>
+    void propagate(const expr::access<T, Strategy> &access, const expr::base<Expr> &mult)
     {
-        get_tape<T>()->push_rvalue(access.grad_index().value(), mult);
+        get_tape<T>()->template push_rvalue<Tag>(access.grad_index().value(), mult);
     }
 
-    template<typename Op, typename Lhs, typename Rhs, typename Expr>
+    template<typename Tag, typename Op, typename Lhs, typename Rhs, typename Expr>
     void propagate(const expr::binary<Op, Lhs, Rhs> &binary, const expr::base<Expr> &mult)
     {
         const auto& lhs = binary.lhs();
         const auto& rhs = binary.rhs();
         const auto& op = binary.op();
         if (is_ad(lhs))
-            propagate(lhs, grad_lhs(lhs, rhs, mult, op));
+            propagate<typename Tag::backward_lhs>(lhs, grad_lhs(lhs, rhs, mult, op));
         if (is_ad(rhs))
-            propagate(rhs, grad_rhs(lhs, rhs, mult, op));
+            propagate<typename Tag::backward_rhs>(rhs, grad_rhs(lhs, rhs, mult, op));
     }
 
-    template<typename Seq, typename Expr>
+    template<typename Tag, typename Seq, typename Expr>
     void propagate(const expr::term<Seq>&, const expr::base<Expr>&) {}
 
-    template<typename Op, typename Arg, typename Expr>
+    template<typename Tag, typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg> &unary, const expr::base<Expr> &mult)
     {
         const auto& arg = unary.arg();
-        propagate(arg, grad(arg, mult, unary.op()));
+        propagate<Tag>(arg, grad(arg, mult, unary.op()));
     }
 }

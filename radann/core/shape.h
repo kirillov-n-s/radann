@@ -50,18 +50,19 @@ namespace radann::core
 {
     template<typename InputIterator>
     shape::shape(InputIterator first, InputIterator last)
+        : _data(std::distance(first, last))
     {
         std::copy(first, last, _data.begin());
         _length = std::accumulate(_data.begin(), _data.end(), (size_t)1, std::multiplies<size_t>{});
     }
 
     shape::shape(const std::initializer_list<size_t> &data)
-            : shape(data.begin(), data.end())
+        : shape(data.begin(), data.end())
     {}
 
     size_t shape::operator[](size_t i) const
     {
-        return _data[i];
+        return i < rank() ? _data[i] : 1;
     }
 
     size_t shape::length() const

@@ -24,6 +24,11 @@ namespace radann
     inline auto make_array(const expr::base<Expr>&, bool);
 
     template <typename T>
+    inline auto copy(const array<T>&);
+    template <typename T>
+    inline auto copy(const array<T>&, bool ad);
+
+    template <typename T>
     inline auto make_constant(const shape&, T, bool = autodiff);
     template <typename T = real>
     inline auto make_ones(const shape&, bool = autodiff);
@@ -80,6 +85,18 @@ namespace radann
     inline auto make_array(const expr::base<Expr>& expr, bool ad)
     {
         return array<typename Expr::value_type> { expr, ad };
+    }
+
+    template <typename T>
+    inline auto copy(const array<T> &other)
+    {
+        return array<T> { other.data(), other.shape(), other.ad() };
+    }
+
+    template <typename T>
+    inline auto copy(const array<T> &other, bool ad)
+    {
+        return array<T> { other.data(), other.shape(), ad };
     }
 
     template <typename T>

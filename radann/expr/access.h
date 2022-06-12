@@ -5,14 +5,14 @@
 
 namespace radann::expr
 {
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     class access :
-        public base<access<T, Policy>>,
-        public Policy::entry_type
+        public base<access<T, Strategy>>,
+        public Strategy::entry_type
     {
     public:
         using value_type = T;
-        using policy_type = Policy;
+        using strategy_type = Strategy;
         static constexpr bool is_expr = true;
 
     private:
@@ -20,7 +20,7 @@ namespace radann::expr
         size_t _size;
         core::shape _shape;
 
-        access(const T*, size_t, const core::shape&, const typename Policy::index_type&);
+        access(const T*, size_t, const core::shape&, const typename Strategy::index_type&);
 
     public:
         __host__ __device__ inline
@@ -37,34 +37,34 @@ namespace radann::expr
 
 namespace radann::expr
 {
-    template<typename T, typename Policy>
-    access<T, Policy>::access(const T *data, size_t size, const core::shape &shape,
-                              const typename Policy::index_type &grad_index)
-        : Policy::entry_type(grad_index),
+    template<typename T, typename Strategy>
+    access<T, Strategy>::access(const T *data, size_t size, const core::shape &shape,
+                                  const typename Strategy::index_type &grad_index)
+        : Strategy::entry_type(grad_index),
           _data(data), _size(size), _shape(shape)
     {}
     
-    template<typename T, typename Policy>
+    template<typename T, typename Strategy>
     __host__ __device__
-    T access<T, Policy>::operator[](size_t i) const
+    T access<T, Strategy>::operator[](size_t i) const
     {
         return _data[i % _size];
     }
 
-    template<typename T, typename Policy>
-    size_t access<T, Policy>::rank() const
+    template<typename T, typename Strategy>
+    size_t access<T, Strategy>::rank() const
     {
         return _shape.rank();
     }
 
-    template<typename T, typename Policy>
-    auto access<T, Policy>::shape() const
+    template<typename T, typename Strategy>
+    auto access<T, Strategy>::shape() const
     {
         return _shape;
     }
 
-    template<typename T, typename Policy>
-    size_t access<T, Policy>::shape(size_t i) const
+    template<typename T, typename Strategy>
+    size_t access<T, Strategy>::shape(size_t i) const
     {
         return _shape[i];
     }
@@ -75,7 +75,7 @@ namespace radann::expr
         if constexpr(Expr::is_expr)
             return expr;
         else
-            return access<typename Expr::value_type, typename Expr::policy_type>
+            return access<typename Expr::value_type, typename Expr::strategy_type>
                 { expr.data(), expr.size(), expr.shape(), expr.grad_index() };
     }
 }

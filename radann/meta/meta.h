@@ -23,24 +23,24 @@ namespace radann::meta
         using type = T;
     };
 
-    struct always_same_type {};
+    struct any_type {};
 
     template<typename T>
-    struct same_type<always_same_type, T>
+    struct same_type<any_type, T>
     {
         using type = T;
     };
 
     template<typename T>
-    struct same_type<T, always_same_type>
+    struct same_type<T, any_type>
     {
         using type = T;
     };
 
     template<>
-    struct same_type<always_same_type, always_same_type>
+    struct same_type<any_type, any_type>
     {
-        using type = always_same_type;
+        using type = any_type;
     };
 
     template<typename T, typename U>
