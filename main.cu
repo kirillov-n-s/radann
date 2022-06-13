@@ -1,156 +1,205 @@
 #include "radann/radann.h"
 #include <chrono>
+#include <fstream>
 
 using timer = std::chrono::system_clock;
 
-struct messy_identity
+int reverse_endian(int i)
 {
-    static constexpr bool does_validate = false;
-
-    template <typename T>
-    auto operator()(const radann::array<T>& x) const
-    {
-        return x;
-    }
-};
-
-namespace radann::diff
+    unsigned char ch1, ch2, ch3, ch4;
+    ch1 = i & 255;
+    ch2 = (i >> 8) & 255;
+    ch3 = (i >> 16) & 255;
+    ch4 = (i >> 24) & 255;
+    return ((int)ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
+}
+radann::array<> read_mnist_images(const char *path)
 {
-    template<typename Arg, typename Mult>
-    auto grad(const radann::expr::base<Arg>&, const radann::expr::base<Mult>&, const messy_identity&)
+    std::ifstream file { path, std::ios::binary };
+    if (!file.is_open())
+        throw std::runtime_error("Cannot open file " + std::string(path));
+
+    int magic = 0,
+        n_images = 0,
+        n_rows = 0,
+        n_cols = 0;
+
+    file.read((char*)&magic, sizeof(magic));
+    magic = reverse_endian(magic);
+    file.read((char*)&n_images, sizeof(n_images));
+    n_images = reverse_endian(n_images);
+    file.read((char*)&n_rows, sizeof(n_rows));
+    n_rows = reverse_endian(n_rows);
+    file.read((char*)&n_cols, sizeof(n_cols));
+    n_cols = reverse_endian(n_cols);
+
+    auto n = n_images * n_rows * n_cols;
+    std::vector<radann::real> data(n);
+    for(int i = 0; i < n; i++)
     {
-        return radann::constant<typename Arg::value_type>(1);
+        unsigned char tmp = 0;
+        file.read((char*)&tmp, sizeof(tmp));
+        data[i] = (radann::real)tmp;
     }
+
+    return radann::make_array(radann::make_shape(n_rows, n_cols, n_images),
+                              data.begin(), data.end(),
+                              false);
 }
 
-template<>
-struct radann::diff::backward<messy_identity>
+radann::array<> read_mnist_labels(const char *path)
 {
-    template<typename T>
-    static void function(array_no_ad<T> &dx, const array_no_ad<T> &dy, const array_no_ad<T> &mult)
+    std::ifstream file { path, std::ios::binary };
+    if (!file.is_open())
+        throw std::runtime_error("Cannot open file " + std::string(path));
+
+    int magic = 0,
+        n_labels = 0,
+        n_digits = 10;
+
+    file.read((char*)&magic, sizeof(magic));
+    magic = reverse_endian(magic);
+    file.read((char*)&n_labels, sizeof(n_labels));
+    n_labels = reverse_endian(n_labels);
+
+    std::vector<radann::real> data(n_labels * n_digits);
+    for(int i = 0; i < n_labels; i++)
     {
-        dx += mult * dy + radann::constant(0.1f);
+        unsigned char tmp = 0;
+        file.read((char*)&tmp, sizeof(tmp));
+        for (int j = 0; j < n_digits; j++)
+            data[i * n_digits + j] = (radann::real)(j == tmp);
     }
-};
 
-struct s : radann::diff::backward<messy_identity> {};
-
-template <typename Arg>
-inline auto mess(const radann::expr::base<Arg>& arg)
-{
-    return radann::core::eager(messy_identity{}, arg);
+    return radann::make_array(radann::make_shape(n_digits, n_labels),
+                              data.begin(), data.end(),
+                              false);
 }
+
+auto to_digit(const radann::array<> &output)
+{
+    auto host = output.host();
+    return std::max_element(host.begin(), host.end()) - host.begin();
+}
+
+class neural_network
+{
+private:
+    std::vector<radann::array<>> _weights;
+    std::vector<radann::array<>> _biases;
+
+public:
+    neural_network(const std::initializer_list<size_t> &layers)
+    {
+        auto init = radann::uniform<radann::real>() * 0.6_fC - 0.3_fC;
+        auto n = layers.size();
+        auto data = layers.begin();
+        for (int i = 1; i < n; i++)
+        {
+            _weights.push_back(radann::make_array(radann::make_shape(data[i], data[i - 1]), init, true));
+            _biases.push_back(radann::make_array(radann::make_shape(data[i]), init, true));
+        }
+    }
+
+    radann::array<> predict(const radann::array<> &input, bool train = false) const
+    {
+        auto res = input;
+        auto n = _weights.size();
+        for (int i = 0; i < n; i++)
+            res >>= radann::make_array(
+                    radann::sigmoid(radann::matmul(_weights[i], res) + _biases[i]),
+                    train);
+        return res;
+    }
+
+    void train(const radann::array<>& inputs, const radann::array<>& labels,
+               radann::real learning_rate, int n_epochs, bool print = true)
+    {
+        auto lr = radann::constant(learning_rate);
+        for (int i = 0; i < n_epochs; i++)
+        {
+            auto output = predict(inputs(i), true);
+            auto loss = radann::sum(radann::pow2(labels(i) - output) / radann::constant<radann::real>(output.size()));
+            if (print)
+                std::cout << "\tEpoch " << i
+                          << "loss =\n" << loss;
+
+            loss.set_grad();
+            radann::reverse();
+            for (auto& weight : _weights)
+                weight -= weight.get_grad() * lr;
+            for (auto& bias : _biases)
+                bias -= bias.get_grad() * lr;
+
+            radann::clear();
+            for (auto& weight : _weights)
+                weight.set_grad(0._fC);
+            for (auto& bias : _biases)
+                bias.set_grad(0._fC);
+        }
+    }
+
+    radann::real accuracy(const radann::array<>& inputs, const radann::array<>& labels, int n_tests)
+    {
+        int n_correct = 0;
+        for (int i = 0; i < n_tests; i++)
+            n_correct += to_digit(predict(inputs(i))) == to_digit(labels(i));
+        return (radann::real)n_correct / n_tests;
+    }
+
+    /*void save(const char *path)
+    {
+        std::ofstream file { path };
+        if (!file.is_open())
+            throw std::runtime_error("Cannot open file " + std::string(path));
+
+        for (const auto& weight : _weights)
+            radann::save(file, weight);
+        for (const auto& bias : _biases)
+            radann::save(file, bias);
+    }*/
+};
 
 int main()
 {
-    /*auto s = radann::make_shape(2, 2);
+    std::string dir = R"(C:\Users\user\Desktop\University\!Coursework\coursework\mnist\)";
 
-    auto x0 = radann::make_constant(s, 1.337f);
-    auto x1 = radann::make_constant(s, 1.488f);
+    auto train_images = read_mnist_images((dir + "train-images.idx3-ubyte").c_str());
+    auto train_labels = read_mnist_labels((dir + "train-labels.idx1-ubyte").c_str());
+    auto test_images  = read_mnist_images((dir + "t10k-images.idx3-ubyte").c_str());
+    auto test_labels  = read_mnist_labels((dir + "t10k-labels.idx1-ubyte").c_str());
 
-    auto y = radann::make_constant(s, 4.f);
-    auto z = radann::make_array(2._fC * x0 + 3._fC * x1 * x1);
-    y *= radann::sin(z);
+    radann::array<> train_images_flattened = train_images.flatten(1) / 255._fC;
+    radann::array<> test_images_flattened  = test_images.flatten(1) / 255._fC;
 
-    y.set_grad(2._fC);
+    auto n_inputs  = train_images_flattened.shape(0);
+    auto n_outputs = train_labels.shape(0);
+    size_t n_hidden1 = 128;
+    size_t n_hidden2 = 128;
 
-    radann::reverse();
+    auto learning_rate = 1.f;
+    auto n_epochs = train_images_flattened.shape(1);
+    auto n_tests = test_images_flattened.shape(1);
 
-    std::cout << "dx0 =\n" << x0.get_grad()
-              << "dx1 =\n" << x1.get_grad()
-              << "y =\n" << y;*/
+    neural_network nn { n_inputs, n_hidden1, n_hidden2, n_outputs };
+    nn.train(train_images_flattened, train_labels, learning_rate, n_epochs, false);
+    std::cout << "Test accuracy = " << nn.accuracy(test_images_flattened, test_labels, n_tests) << '\n';
 
-    /*auto s = radann::make_shape(3, 3);
+    int i = -1;
+    do
+    {
+        std::cout << "\nEnter test image index: ";
+        std::cin >> i;
+        if (i == -1)
+            break;
 
-    auto x = radann::make_arithm(s, -4.f, 1.f);
-    radann::array<> y = radann::sigmoid(x);
-    y.set_grad();
+        std::cout << test_images(i)
+                  << "Label: " << to_digit(test_labels(i)) << '\n'
+                  << "Predicted: " << to_digit(nn.predict(test_images_flattened(i))) << "\n\n";
+    }
+    while (true);
 
-    auto t = radann::copy(x);
-    radann::array<> z = 1._fC / (1._fC + radann::exp(-t));
-    z.set_grad();
-
-    radann::reverse();
-
-    std::cout << x << t
-              << "\n----------------------\n\n"
-              << y << z
-              << "\n----------------------\n\n"
-              << x.get_grad() << t.get_grad();*/
-
-    /*auto a = radann::make_arithm(radann::make_shape(10), 1.f, 1.f);
-    auto b = radann::make_geom(radann::make_shape(3, 3), 1.f, 2.f);
-    auto c = radann::make_constant(radann::make_shape(2, 2, 2), 13.f);
-
-    auto x = mess(a + 3._fC);
-    auto y = mess(b / radann::constant<radann::real>(b.size()));
-    auto z = mess(c * c);
-
-    x.set_grad();
-    y.set_grad();
-    z.set_grad();
-
-    radann::reverse();
-
-    std::cout << "\n----------------INPUT------------------\n\n"
-              << a << b << c
-              << "\n----------------MESS-----------------\n\n"
-              << x << y << z
-              << "\n----------------GRAD-------------------\n\n"
-              << a.get_grad() << b.get_grad() << c.get_grad();*/
-
-    auto o = 3, i = 4, n = 5;
-
-    auto w = radann::make_constant(radann::make_shape(o, i), 0.5f);
-    auto x = radann::make_arithm(radann::make_shape(i), 1.f, 1.f);
-    auto y = radann::matmul(w, x);
-
-    y.set_grad();
-    radann::reverse();
-
-    std::cout << "W = \n" << w
-              << "X = \n" << x
-              << "Y = \n" << y
-              << "dW = \n" << w.get_grad()
-              << "dX = \n" << x.get_grad();
+    //nn.save((dir + "learned_parameters").c_str());
 
     std::cin.get();
 }
-
-/*int main()
-{
-    const size_t k10 = 8;
-    size_t n10[k10] = {10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000 };
-
-    const size_t k2 = 11;
-    size_t n2[k2] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 };
-
-    const auto k = k10;
-    const auto n = n10;
-
-    uint64_t time[k] = { 0 };
-
-    size_t tests = 1000;
-
-    auto global_then = timer::now();
-    for (int t = 0; t < tests; t++)
-        for (int i = 0; i < k; i++)
-        {
-            auto m = n[i];
-            auto x = radann::make_arithm(radann::make_shape(m), 0.f, 1.f);
-            auto y = radann::make_array(radann::sigmoid(x));
-
-            auto then = timer::now();
-            auto z = radann::eval(radann::sin(x) / radann::pow2(y) + get_grad::log(3._fC));
-            time[i] += std::chrono::duration_cast<std::chrono::microseconds>(timer::now() - then).count();
-        }
-    auto global_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - global_then).count();
-
-    std::cout << "tests = " << tests << ", k = " << k << "\n\n"
-              << "full tests time = " << global_time << " s\n\n";
-    for (int i = 0; i < k; i++)
-        std::cout << "n = " << n[i] << '\n'
-                  << "\tavg time = " << time[i] / tests << " us\n";
-
-    std::cin.get();
-}*/

@@ -42,6 +42,7 @@ namespace radann::diff
         void push_lvalue(size_t);
 
         void reverse();
+        void clear();
     };
 }
 
@@ -84,7 +85,7 @@ namespace radann::diff
     template<typename Tag, typename Expr>
     void tape<T>::push_rvalue(size_t index, const expr::base<Expr> &mult)
     {
-        array_no_ad<T> array { _gradients[index].shape(), mult };
+        array_no_ad<T> array { mult };
         _multipliers.push_back(array);
         _rvalue_indices.push_back(index);
         _backward_functions.push_back(&backward<Tag>::function);
@@ -116,5 +117,18 @@ namespace radann::diff
             _backward_functions[j](_gradients[_rvalue_indices[j]],
                                    output_grad,
                                    _multipliers[j]);
+    }
+
+    template<typename T>
+    void tape<T>::clear()
+    {
+        _lvalue_indices.clear();
+        _last_op_indices.clear();
+        _rvalue_indices.clear();
+        _multipliers.clear();
+        _backward_functions.clear();
+        //_next_index = 0;
+        /*for (auto& grad : _gradients)
+            grad = func::constant<T>(0);*/
     }
 }

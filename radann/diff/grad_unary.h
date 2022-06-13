@@ -1,6 +1,7 @@
 #pragma once
 #include "../func/unary.h"
 #include "../func/sequence.h"
+#include "../func/reduce.h"
 
 namespace radann::diff
 {
@@ -39,5 +40,11 @@ namespace radann::diff
     {
         auto e = func::exp(-arg);
         return e / func::pow2(func::constant<typename Arg::value_type>(1) + e) * mult;
+    }
+
+    template<typename Arg, typename Mult>
+    auto grad(const expr::base<Arg> &arg, const expr::base<Mult> &mult, const core::sum&)
+    {
+        return mult.self();
     }
 }

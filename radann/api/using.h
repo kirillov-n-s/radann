@@ -9,6 +9,7 @@ namespace radann
 
     using core::shape;
     using core::make_shape;
+    using core::save;
 
     using namespace func;
 }

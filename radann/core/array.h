@@ -64,7 +64,7 @@ namespace radann::core
         template<typename Expr>
         array& operator/=(const expr::base<Expr>&);
 
-        //array_no_ad& operator>>=(const array_no_ad&);
+        array& operator>>=(const array&);
 
         size_t rank() const;
         const shape& shape() const;
@@ -87,6 +87,9 @@ namespace radann::core
 
     template<typename T, typename Strategy>
     std::ostream& operator<<(std::ostream&, const array<T, Strategy>&);
+
+    template<typename T, typename Strategy>
+    void save(std::ostream&, const array<T, Strategy>&);
 }
 
 namespace radann::core
@@ -167,7 +170,7 @@ namespace radann::core
     template<typename T, typename Strategy>
     template<typename Expr>
     array<T, Strategy>::array(const core::shape &shape, const expr::base<Expr> &expr)
-        : array(expr.self().shape(), expr, diff::is_ad(expr.self()))
+        : array(shape, expr, diff::is_ad(expr.self()))
     {}
 
     template<typename T, typename Strategy>
@@ -241,8 +244,8 @@ namespace radann::core
         return (*this = *this / expr);
     }
 
-    /*template<typename T, typename Strategy>
-    array_no_ad<T, Strategy> &array_no_ad<T, Strategy>::operator>>=(const array_no_ad &other)
+    template<typename T, typename Strategy>
+    array<T, Strategy> &array<T, Strategy>::operator>>=(const array &other)
     {
         if (this == &other)
             return *this;
@@ -250,10 +253,11 @@ namespace radann::core
         this->_storage = other._storage;
         this->_storage->add_ref();
         this->_offset = other._offset;
+        this->_size = other._size;
         _shape = other._shape;
-        _grad_index = other._grad_index;
+        this->set_grad_index(other.grad_index());
         return *this;
-    }*/
+    }
 
     template<typename T, typename Strategy>
     size_t array<T, Strategy>::rank() const
@@ -308,6 +312,67 @@ namespace radann::core
         return flatten(rank() - 1);
     }
 
+    /*template<typename Array>
+    void print(std::ostream &out, size_t width, Array array)
+    {
+        const auto host = array.host();
+        const auto data = host.data();
+        const auto storage = array.storage();
+
+        out
+            << std::scientific
+            << std::setprecision(std::numeric_limits<T>::max_digits10)
+            << std::right
+            << std::showpos;
+
+        out << "0x" << storage->data() << '\n'
+            << "nrefs = " << storage->nrefs() << '\n';
+
+        if (array.ad())
+            out << "autodiff = true\n"
+                << "gradient index = " << array.grad_index().value() << '\n';
+        else
+            out << "autodiff = false\n";
+
+        auto rank = array.rank();
+        if (rank == 0)
+        {
+            out << '[' << data[0] << "]\n\n";
+            return;
+        }
+
+        const auto& shape = array.shape();
+        std::vector<size_t> prods(rank);
+        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
+
+        out << shape << '[' << std::setw(width) << data[0];
+
+        auto n = shape.length();
+        if (n > 1)
+            out << ", ";
+        else
+        {
+            out << "]\n\n";
+            return;
+        }
+
+        for (size_t i = 1; i < n - 1; i++)
+        {
+            for (const auto& p : prods)
+                out << (i % p == 0 ? "\n" : "");
+            out << (i % prods[0] == 0 ? " " : "") << std::setw(width) << data[i] << ", ";
+        }
+
+        out << std::setw(width) << data[n - 1] << "]\n\n";
+    }
+
+    template<typename Array, typename... Arrays>
+    void print(std::ostream &out, size_t width, Array array, Arrays... arrays)
+    {
+        print(out, width, array);
+        print(out, width, arrays...);
+    }*/
+
     template<typename T, typename Strategy>
     std::ostream &operator<<(std::ostream &out, const array<T, Strategy> &array)
     {
@@ -321,14 +386,17 @@ namespace radann::core
             << std::right
             << std::showpos;*/
 
-        out << "0x" << storage->data() << '\n'
+        //auto width = std::numeric_limits<T>::max_digits10 + 1;
+        auto width = 3;
+
+        /*out << "0x" << storage->data() << '\n'
             << "nrefs = " << storage->nrefs() << '\n';
 
         if (array.ad())
             out << "autodiff = true\n"
                 << "gradient index = " << array.grad_index().value() << '\n';
         else
-            out << "autodiff = false\n";
+            out << "autodiff = false\n";*/
 
         auto rank = array.rank();
         if (rank == 0)
@@ -338,7 +406,7 @@ namespace radann::core
         std::vector<size_t> prods(rank);
         std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
 
-        out << shape << '[' << data[0];
+        out << shape << '[' << std::setw(width) << data[0];
 
         auto n = shape.length();
         if (n > 1)
@@ -350,9 +418,24 @@ namespace radann::core
         {
             for (const auto& p : prods)
                 out << (i % p == 0 ? "\n" : "");
-            out << (i % prods[0] == 0 ? " " : "") << data[i] << ", ";
+            out << (i % prods[0] == 0 ? " " : "") << std::setw(width) << data[i] << ", ";
         }
 
-        return out << data[n - 1] << "]\n\n";
+        return out << std::setw(width) << data[n - 1] << "]\n\n";
+    }
+
+    template<typename T, typename Strategy>
+    void save(std::ostream &out, const array<T, Strategy> &array)
+    {
+        auto rank = array.rank();
+        out << rank;
+        for (size_t i = 0; i < rank; i++)
+            out << array.shape(i);
+
+        auto host = array.host();
+        auto data = host.data();
+        auto size = array.size();
+        for (size_t i = 0; i < size; i++)
+            out << data[i];
     }
 }

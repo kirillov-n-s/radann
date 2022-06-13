@@ -1,14 +1,14 @@
 #pragma once
 #include "../core/eager.h"
 #include "../core/reduce.h"
-#include "unary.h"
+//#include "unary.h"
 
 namespace radann::func
 {
     template <typename Arg>
     inline auto sum(const expr::base<Arg>&);
 
-    template <typename Arg>
+    /*template <typename Arg>
     inline auto prod(const expr::base<Arg>&);
 
     template <typename Arg>
@@ -20,7 +20,7 @@ namespace radann::func
     template <typename Arg>
     inline auto norm2(const expr::base<Arg>&);
 
-    /*template <typename Arg>
+    template <typename Arg>
     inline auto mean(const expr::base<Arg>&);
 
     template <typename Arg>
@@ -35,10 +35,10 @@ namespace radann::func
     template <typename Arg>
     inline auto sum(const expr::base<Arg>& arg)
     {
-        return expr::make_eager(oper::sum{}, arg);
+        return core::eager(core::sum{}, arg);
     }
 
-    template <typename Arg>
+    /*template <typename Arg>
     inline auto prod(const expr::base<Arg>& arg)
     {
         return expr::make_eager(oper::prod{}, arg);
@@ -62,7 +62,7 @@ namespace radann::func
         return expr::make_eager(oper::norm2{}, arg);
     }
 
-    /*template <typename Arg>
+    template <typename Arg>
     inline auto mean(const expr::base<Arg>& arg)
     {
         auto map = expr::eager(oper::sum{}, arg);
