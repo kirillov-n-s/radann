@@ -115,7 +115,7 @@ public:
     int train(const radann::array<>& inputs, const radann::array<>& labels,
               radann::real learning_rate,
               int min_epochs, int max_epochs, radann::real error_threshold,
-              bool verbose = false)
+              bool verbose = false, int every_nth = 100)
     {
         auto i = 0;
         radann::real error_sum = 0.f,
@@ -132,7 +132,7 @@ public:
 
             error_sum += *loss.host().data();
             mean_error = error_sum / i;
-            if (verbose && i % 100 == 0)
+            if (verbose && i % every_nth == 0)
                 std::cout << "Epoch " << i << ": mean error = " << mean_error << '\n';
 
             radann::reverse();
@@ -155,6 +155,9 @@ public:
         for (auto& bias : _biases)
             bias.deactivate_grad();
         radann::clear();
+
+        if (verbose)
+            std::cout << '\n';
 
         return i;
     }
@@ -188,7 +191,7 @@ int main()
     auto learning_rate = 4.0f;
     auto min_epochs = 10;
     auto max_epochs = train_images_flattened.shape(1);
-    auto error_threshold = 0.01f;
+    auto error_threshold = 0.03f;
     auto n_tests = test_images_flattened.shape(1);
 
     neural_network nn { n_inputs, n_hidden1, n_hidden2, n_outputs };
@@ -205,11 +208,9 @@ int main()
     auto test_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - then).count();
 
     std::cout << "Train time = " << train_time << " s\n"
-              << "Train epochs = " << train_epochs << "\n\n"
+              << "Train epochs = " << train_epochs << '\n'
               << "Test time = " << test_time << " s\n"
               << "Test accuracy = " << test_accuracy << '\n';
-
-    radann::diff::get_tape<radann::real>()->stats();
 
     int i = -1;
     do

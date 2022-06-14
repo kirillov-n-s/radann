@@ -36,12 +36,12 @@ namespace radann::core
     public:
         array(cuda::shared_storage<T>*, const core::shape&, size_t,
               typename Strategy::index_type, bool = true);
-        array(const T*, const core::shape&, bool = autodiff);
+        array(const T*, const core::shape&, bool);
 
-        array(const core::shape&, bool = autodiff);
+        array(const core::shape&, bool);
         template<typename InputIterator>
-        array(const core::shape&, InputIterator, InputIterator, bool = autodiff);
-        array(const core::shape&, const std::initializer_list<T>&, bool = autodiff);
+        array(const core::shape&, InputIterator, InputIterator, bool);
+        array(const core::shape&, const std::initializer_list<T>&, bool);
 
         array(array&&);
         array(const array&);

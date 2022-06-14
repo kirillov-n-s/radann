@@ -38,9 +38,6 @@ namespace radann::diff
         std::list<index_t> _gaps;
         index_t _next_index = 0;
 
-        size_t _calls = 0;
-        size_t _matches = 0;
-
         tape() = default;
 
     public:
@@ -61,12 +58,6 @@ namespace radann::diff
 
         void reverse();
         void clear();
-
-        void stats() const
-        {
-            std::cout << "Gradient indices: " << _next_index << '\n'
-                      << "Shape matches: " << _matches << "/" << _calls << '\n';
-        }
     };
 }
 
@@ -75,10 +66,9 @@ namespace radann::diff
     template<typename T>
     index_t tape<T>::create_grad(const core::shape &shape)
     {
-        _calls++;
         if (_gaps.empty())
         {
-            _gradients.push_back({ array_no_ad<T> { shape } });
+            _gradients.push_back({ array_no_ad<T> { shape, false } });
             return _next_index++;
         }
 
@@ -88,12 +78,9 @@ namespace radann::diff
         gap.nrefs = 1;
         auto& grad = gap.value;
         if (grad.shape() == shape)
-        {
-            _matches++;
             grad.zero();
-        }
         else
-            grad >>= array_no_ad<T> { shape };
+            grad >>= array_no_ad<T> { shape, false };
         return index;
     }
 

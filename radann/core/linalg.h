@@ -33,10 +33,11 @@ namespace radann::core
         {
             auto xrank = x.rank();
             auto yrank = y.rank();
+            auto ad = x.ad() || y.ad();
 
             if (xrank > yrank)
             {
-                auto res = array<T, Strategy> { make_shape(x.shape(LTrans)) };
+                auto res = array<T, Strategy> { make_shape(x.shape(LTrans)), ad };
                 cuda::cublas::gemv<LTrans>(x.data(), y.data(), res.data(), x.shape(0), x.shape(1));
                 return res;
             }
@@ -47,13 +48,13 @@ namespace radann::core
                 {
                     auto rows = x.size();
                     auto cols = y.size();
-                    auto res = array<T, Strategy>{ make_shape(rows, cols) };
+                    auto res = array<T, Strategy>{ make_shape(rows, cols), ad };
                     cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
                     return res;
                 }
                 else
                 {
-                    auto res = array<T, Strategy> { make_shape() };
+                    auto res = array<T, Strategy> { make_shape(), ad };
                     cuda::cublas::dot(x.data(), y.data(), res.data(), x.size());
                     return res;
                 }
@@ -62,7 +63,7 @@ namespace radann::core
             auto rows = x.shape(LTrans);
             auto mid = x.shape(!LTrans);
             auto cols = y.shape(!RTrans);
-            auto res = array<T, Strategy> { make_shape(rows, cols) };
+            auto res = array<T, Strategy> { make_shape(rows, cols), ad };
             cuda::cublas::gemm<LTrans, RTrans>(x.data(), y.data(), res.data(), rows, mid, cols);
             return res;
         }

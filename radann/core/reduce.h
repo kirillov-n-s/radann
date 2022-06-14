@@ -13,7 +13,7 @@ namespace radann::core
         template <typename T, typename Strategy>
         auto operator()(const array<T, Strategy> &x) const
         {
-            auto res = array<T, Strategy> { make_shape() };
+            auto res = array<T, Strategy> { make_shape(), x.ad() };
             cuda::reduce(x.data(), res.data(), x.size(), oper::add{});
             return res;
         }
