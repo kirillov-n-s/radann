@@ -1,13 +1,24 @@
 #pragma once
 #include <iomanip>
 #include "shape.h"
-#include "default.h"
 #include "../cuda/shared_array.h"
 #include "../cuda/assign.h"
 #include "../diff/is_ad.h"
 
 namespace radann::core
 {
+#if defined(RADANN_DEFAULT_REAL_DOUBLE)
+    using real = double;
+#else
+    using real = float;
+#endif
+
+#if defined(RADANN_DEFAULT_AUTODIFF_FALSE)
+    constexpr bool autodiff = false;
+#else
+    constexpr bool autodiff = true;
+#endif
+
     template<typename T, typename Strategy>
     class array :
         public expr::base<array<T, Strategy>>,
@@ -24,8 +35,7 @@ namespace radann::core
 
     public:
         array(cuda::shared_storage<T>*, const core::shape&, size_t,
-              const typename Strategy::index_type&, bool = true);
-        //array(cuda::shared_storage<T>*, const core::shape&, size_t);
+              typename Strategy::index_type, bool = true);
         array(const T*, const core::shape&, bool = autodiff);
 
         array(const core::shape&, bool = autodiff);
@@ -33,6 +43,8 @@ namespace radann::core
         array(const core::shape&, InputIterator, InputIterator, bool = autodiff);
         array(const core::shape&, const std::initializer_list<T>&, bool = autodiff);
 
+        array(array&&);
+        array(const array&);
         template<typename OtherStrategy>
         array(const array<T, OtherStrategy>&);
 
@@ -80,34 +92,31 @@ namespace radann::core
 
         template<typename Op, typename Arg>
         friend auto eager(const Op&, const expr::base<Arg>&);
-
         template <typename Op, typename Lhs, typename Rhs>
         friend auto eager(const Op&, const expr::base<Lhs>&, const expr::base<Rhs>&);
     };
 
-    template<typename T, typename Strategy>
-    std::ostream& operator<<(std::ostream&, const array<T, Strategy>&);
+    template<typename Expr>
+    inline auto eval(const expr::base<Expr>&);
+
+    template <typename T, typename Strategy>
+    inline auto copy(const array<T, Strategy>&);
+    template <typename T, typename Strategy>
+    inline auto copy(const array<T, Strategy>&, bool ad);
 
     template<typename T, typename Strategy>
-    void save(std::ostream&, const array<T, Strategy>&);
+    std::ostream& operator<<(std::ostream&, const array<T, Strategy>&);
 }
 
 namespace radann::core
 {
     template<typename T, typename Strategy>
     array<T, Strategy>::array(cuda::shared_storage<T> *storage, const core::shape &shape, size_t offset,
-                              const typename Strategy::index_type &base_index, bool derive)
+                              typename Strategy::index_type base_index, bool derive)
         : cuda::shared_array<T>(storage, shape.length(), offset),
           Strategy(shape, offset, base_index, derive),
           _shape(shape)
     {}
-
-    /*template<typename T, typename Strategy>
-    array<T, Strategy>::array(cuda::shared_storage <T> *storage, const core::shape &shape, size_t offset)
-        : cuda::shared_array<T>(storage, shape.length(), offset),
-          Strategy(),
-          _shape(shape)
-    {}*/
 
     template<typename T, typename Strategy>
     array<T, Strategy>::array(const T *device_ptr, const core::shape &shape, bool ad)
@@ -134,12 +143,22 @@ namespace radann::core
         if (dist > this->_size)
             throw std::invalid_argument("Iterator range exceeds array_no_ad shape.");
         cuda::host_buffer<T> host { first, last };
-        this->_storage->copy_from(host);
+        this->copy(host);
     }
 
     template<typename T, typename Strategy>
     array<T, Strategy>::array(const core::shape &shape, const std::initializer_list<T> &data, bool ad)
         : array(shape, data.begin(), data.end(), ad)
+    {}
+
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(array<T, Strategy> &&other)
+        : array(other.storage(), other.shape(), other.offset(), other.grad_index(), false)
+    {}
+
+    template<typename T, typename Strategy>
+    array<T, Strategy>::array(const array<T, Strategy> &other)
+        : array(other.storage(), other.shape(), other.offset(), other.grad_index(), false)
     {}
 
     template<typename T, typename Strategy>
@@ -187,7 +206,7 @@ namespace radann::core
         if (dist > this->_size)
             throw std::invalid_argument("Iterator range exceeds array_no_ad shape.");
         cuda::host_buffer<T> host { first, last };
-        this->_storage->copy_from(host, this->_offset);
+        this->copy(host, this->_offset);
         return *this;
     }
 
@@ -249,13 +268,12 @@ namespace radann::core
     {
         if (this == &other)
             return *this;
-        this->_storage->remove_ref();
-        this->_storage = other._storage;
-        this->_storage->add_ref();
+        this->link(other._storage);
         this->_offset = other._offset;
         this->_size = other._size;
+        if constexpr(Strategy::does_link)
+            this->link_grad(other._index);
         _shape = other._shape;
-        this->set_grad_index(other.grad_index());
         return *this;
     }
 
@@ -282,7 +300,7 @@ namespace radann::core
     {
         auto extents = _shape.cut(index.rank());
         auto offset = _shape.offset(index);
-        return array<T, Strategy> { this->_storage, extents, this->_offset + offset, this->grad_index() };
+        return array<T, Strategy> { this->_storage, extents, this->_offset + offset, this->_index };
     }
 
     template<typename T, typename Strategy>
@@ -297,13 +315,13 @@ namespace radann::core
     {
         if (this->_size != shape.length())
             throw std::invalid_argument("Array size mismatch.");
-        return array<T, Strategy> { this->_storage, shape, this->_offset, this->grad_index() };
+        return array<T, Strategy> { this->_storage, shape, this->_offset, this->_index };
     }
 
     template<typename T, typename Strategy>
     array<T, Strategy> array<T, Strategy>::flatten(size_t ndims) const
     {
-        return array<T, Strategy> { this->_storage, _shape.flatten(ndims), this->_offset, this->grad_index() };
+        return array<T, Strategy> { this->_storage, _shape.flatten(ndims), this->_offset, this->_index };
     }
 
     template<typename T, typename Strategy>
@@ -312,66 +330,57 @@ namespace radann::core
         return flatten(rank() - 1);
     }
 
-    /*template<typename Array>
-    void print(std::ostream &out, size_t width, Array array)
+    template<typename Op, typename Arg>
+    auto eager(const Op &op, const expr::base<Arg> &arg)
     {
-        const auto host = array.host();
-        const auto data = host.data();
-        const auto storage = array.storage();
+        if constexpr(Op::does_validate)
+            op.validate(arg);
 
-        out
-            << std::scientific
-            << std::setprecision(std::numeric_limits<T>::max_digits10)
-            << std::right
-            << std::showpos;
+        auto arg_array = eval(arg);
+        auto res = op(arg_array);
 
-        out << "0x" << storage->data() << '\n'
-            << "nrefs = " << storage->nrefs() << '\n';
+        if constexpr(decltype(res)::does_record)
+            res.template record_grad<Op>(expr::get_access(arg_array));
 
-        if (array.ad())
-            out << "autodiff = true\n"
-                << "gradient index = " << array.grad_index().value() << '\n';
-        else
-            out << "autodiff = false\n";
-
-        auto rank = array.rank();
-        if (rank == 0)
-        {
-            out << '[' << data[0] << "]\n\n";
-            return;
-        }
-
-        const auto& shape = array.shape();
-        std::vector<size_t> prods(rank);
-        std::partial_sum(shape.begin(), shape.end(), prods.begin(), std::multiplies<size_t>{});
-
-        out << shape << '[' << std::setw(width) << data[0];
-
-        auto n = shape.length();
-        if (n > 1)
-            out << ", ";
-        else
-        {
-            out << "]\n\n";
-            return;
-        }
-
-        for (size_t i = 1; i < n - 1; i++)
-        {
-            for (const auto& p : prods)
-                out << (i % p == 0 ? "\n" : "");
-            out << (i % prods[0] == 0 ? " " : "") << std::setw(width) << data[i] << ", ";
-        }
-
-        out << std::setw(width) << data[n - 1] << "]\n\n";
+        return res;
     }
 
-    template<typename Array, typename... Arrays>
-    void print(std::ostream &out, size_t width, Array array, Arrays... arrays)
+    template<typename Op, typename Lhs, typename Rhs>
+    auto eager(const Op &op, const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs)
     {
-        print(out, width, array);
-        print(out, width, arrays...);
-    }*/
+        if constexpr(Op::does_validate)
+            op.validate(lhs, rhs);
+
+        auto lhs_array = eval(lhs);
+        auto rhs_array = eval(rhs);
+        auto res = op(lhs_array, rhs_array);
+
+        if constexpr(decltype(res)::does_record)
+            res.template record_grad<Op>(expr::make_expr(op, lhs_array, rhs_array));
+
+        return res;
+    }
+
+    template <typename Expr>
+    inline auto eval(const expr::base<Expr> &expr)
+    {
+        if constexpr(Expr::is_expr)
+            return array<typename Expr::value_type, typename Expr::strategy_type> { expr };
+        else
+            return expr.self();
+    }
+
+    template <typename T, typename Strategy>
+    inline auto copy(const array<T, Strategy> &other)
+    {
+        return array<T, Strategy> { other.data(), other.shape(), other.ad() };
+    }
+
+    template <typename T, typename Strategy>
+    inline auto copy(const array<T, Strategy> &other, bool ad)
+    {
+        return array<T, Strategy> { other.data(), other.shape(), ad };
+    }
 
     template<typename T, typename Strategy>
     std::ostream &operator<<(std::ostream &out, const array<T, Strategy> &array)
@@ -394,7 +403,7 @@ namespace radann::core
 
         if (array.ad())
             out << "autodiff = true\n"
-                << "gradient index = " << array.grad_index().value() << '\n';
+                << "gradient index = " << array.grad_index().ptr() << '\n';
         else
             out << "autodiff = false\n";*/
 
@@ -422,20 +431,5 @@ namespace radann::core
         }
 
         return out << std::setw(width) << data[n - 1] << "]\n\n";
-    }
-
-    template<typename T, typename Strategy>
-    void save(std::ostream &out, const array<T, Strategy> &array)
-    {
-        auto rank = array.rank();
-        out << rank;
-        for (size_t i = 0; i < rank; i++)
-            out << array.shape(i);
-
-        auto host = array.host();
-        auto data = host.data();
-        auto size = array.size();
-        for (size_t i = 0; i < size; i++)
-            out << data[i];
     }
 }

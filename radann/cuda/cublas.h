@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 #include <cublas_v2.h>
 #include "../meta/meta.h"
 

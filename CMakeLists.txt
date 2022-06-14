@@ -17,7 +17,7 @@ add_executable(coursework main.cu
         radann/expr/unary.h
         radann/expr/binary.h
         radann/expr/access.h
-        radann/expr/term.h
+        radann/expr/element.h
         radann/oper/sequence.h
         radann/func/sequence.h
         radann/oper/random.h
@@ -26,8 +26,6 @@ add_executable(coursework main.cu
         radann/radann.h
         radann/func/linalg.h
         radann/cuda/cublas.h
-        radann/cuda/cusolver.h
-        radann/api/creation.h
         radann/cuda/host_buffer.h
         radann/core/linalg.h
         radann/cuda/reduce.h
@@ -39,8 +37,6 @@ add_executable(coursework main.cu
         radann/diff/tape_context.h
         radann/cuda/shared_array.h
         radann/cuda/launch.h
-        radann/api/tape.h
-        radann/core/eager.h
         radann/diff/grad_unary.h
         radann/diff/grad_binary.h
         radann/diff/propagate.h
@@ -48,8 +44,8 @@ add_executable(coursework main.cu
         radann/diff/strategy_dynamic_ad.h
         radann/diff/backward.h
         radann/diff/strategy_no_ad.h
-        radann/api/using.h
-        radann/api/eval.h radann/core/default.h radann/diff/entry.h)
+        radann/diff/entry.h
+        )
 
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)

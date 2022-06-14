@@ -11,13 +11,18 @@ namespace radann::cuda
         size_t _size;
         size_t _offset = 0;
 
+        void copy(const host_buffer<T>&, size_t = 0);
+        void link(shared_storage<T>*);
+
     public:
         shared_array(size_t);
         shared_array(const T*, size_t);
         shared_array(shared_storage<T>*, size_t, size_t);
         shared_array(const shared_array&);
 
-        virtual ~shared_array();
+        ~shared_array();
+
+        void zero();
 
         const T* data() const;
         T* data();
@@ -32,6 +37,20 @@ namespace radann::cuda
 
 namespace radann::cuda
 {
+    template<typename T>
+    void shared_array<T>::copy(const host_buffer<T> &host, size_t offset)
+    {
+        _storage->copy(host, offset);
+    }
+
+    template<typename T>
+    void shared_array<T>::link(shared_storage<T> *storage)
+    {
+        _storage->remove_ref();
+        _storage = storage;
+        _storage->add_ref();
+    }
+
     template<typename T>
     shared_array<T>::shared_array(size_t size)
         : _storage(cuda::make_storage<T>(size)), _size(size)
@@ -58,6 +77,12 @@ namespace radann::cuda
     shared_array<T>::~shared_array()
     {
         _storage->remove_ref();
+    }
+
+    template<typename T>
+    void shared_array<T>::zero()
+    {
+        _storage->zero(_size, _offset);
     }
 
     template<typename T>

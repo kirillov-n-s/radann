@@ -144,7 +144,8 @@ namespace radann::core
 
     bool operator==(const shape& lhs, const shape& rhs)
     {
-        return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+        return lhs.length() == rhs.length()
+            && std::equal(lhs.begin(), lhs.end(), rhs.begin());
     }
 
     bool operator!=(const shape& lhs, const shape& rhs)

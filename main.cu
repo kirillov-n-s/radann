@@ -8,7 +8,7 @@ int reverse_endian(int i)
 {
     unsigned char ch1, ch2, ch3, ch4;
     ch1 = i & 255;
-    ch2 = (i >> 8) & 255;
+    ch2 = (i >> 8)  & 255;
     ch3 = (i >> 16) & 255;
     ch4 = (i >> 24) & 255;
     return ((int)ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
@@ -25,7 +25,7 @@ radann::array<> read_mnist_images(const char *path)
         n_cols = 0;
 
     file.read((char*)&magic, sizeof(magic));
-    magic = reverse_endian(magic);
+    //magic = reverse_endian(magic);
     file.read((char*)&n_images, sizeof(n_images));
     n_images = reverse_endian(n_images);
     file.read((char*)&n_rows, sizeof(n_rows));
@@ -58,7 +58,7 @@ radann::array<> read_mnist_labels(const char *path)
         n_digits = 10;
 
     file.read((char*)&magic, sizeof(magic));
-    magic = reverse_endian(magic);
+    //magic = reverse_endian(magic);
     file.read((char*)&n_labels, sizeof(n_labels));
     n_labels = reverse_endian(n_labels);
 
@@ -112,52 +112,60 @@ public:
         return res;
     }
 
-    void train(const radann::array<>& inputs, const radann::array<>& labels,
-               radann::real learning_rate, int n_epochs, bool print = true)
+    int train(const radann::array<>& inputs, const radann::array<>& labels,
+              radann::real learning_rate,
+              int min_epochs, int max_epochs, radann::real error_threshold,
+              bool verbose = false)
     {
+        auto i = 0;
+        radann::real error_sum = 0.f,
+                     mean_error = 0.f;
         auto lr = radann::constant(learning_rate);
-        for (int i = 0; i < n_epochs; i++)
+        for (;
+             i < max_epochs && (mean_error > error_threshold || i < min_epochs);
+             i++)
         {
-            auto output = predict(inputs(i), true);
-            auto loss = radann::sum(radann::pow2(labels(i) - output) / radann::constant<radann::real>(output.size()));
-            if (print)
-                std::cout << "\tEpoch " << i
-                          << "loss =\n" << loss;
+            const auto& label = labels(i);
+            const auto& output = predict(inputs(i), true);
+            auto loss = radann::sum(radann::pow2(label - output) / radann::constant<radann::real>(output.size()));
+            loss.grad() = 1._fC;
 
-            loss.set_grad();
+            error_sum += *loss.host().data();
+            mean_error = error_sum / i;
+            if (verbose && i % 100 == 0)
+                std::cout << "Epoch " << i << ": mean error = " << mean_error << '\n';
+
             radann::reverse();
             for (auto& weight : _weights)
-                weight -= weight.get_grad() * lr;
+            {
+                weight -= weight.grad() * lr;
+                weight.grad().zero();
+            }
             for (auto& bias : _biases)
-                bias -= bias.get_grad() * lr;
-
+            {
+                bias -= bias.grad() * lr;
+                bias.grad().zero();
+            }
+            loss.deactivate_grad();
             radann::clear();
-            for (auto& weight : _weights)
-                weight.set_grad(0._fC);
-            for (auto& bias : _biases)
-                bias.set_grad(0._fC);
         }
+
+        for (auto& weight : _weights)
+            weight.deactivate_grad();
+        for (auto& bias : _biases)
+            bias.deactivate_grad();
+        radann::clear();
+
+        return i;
     }
 
-    radann::real accuracy(const radann::array<>& inputs, const radann::array<>& labels, int n_tests)
+    radann::real test(const radann::array<>& inputs, const radann::array<>& labels, int n_tests)
     {
         int n_correct = 0;
         for (int i = 0; i < n_tests; i++)
             n_correct += to_digit(predict(inputs(i))) == to_digit(labels(i));
         return (radann::real)n_correct / n_tests;
     }
-
-    /*void save(const char *path)
-    {
-        std::ofstream file { path };
-        if (!file.is_open())
-            throw std::runtime_error("Cannot open file " + std::string(path));
-
-        for (const auto& weight : _weights)
-            radann::save(file, weight);
-        for (const auto& bias : _biases)
-            radann::save(file, bias);
-    }*/
 };
 
 int main()
@@ -177,18 +185,36 @@ int main()
     size_t n_hidden1 = 128;
     size_t n_hidden2 = 128;
 
-    auto learning_rate = 1.f;
-    auto n_epochs = train_images_flattened.shape(1);
+    auto learning_rate = 4.0f;
+    auto min_epochs = 10;
+    auto max_epochs = train_images_flattened.shape(1);
+    auto error_threshold = 0.01f;
     auto n_tests = test_images_flattened.shape(1);
 
     neural_network nn { n_inputs, n_hidden1, n_hidden2, n_outputs };
-    nn.train(train_images_flattened, train_labels, learning_rate, n_epochs, false);
-    std::cout << "Test accuracy = " << nn.accuracy(test_images_flattened, test_labels, n_tests) << '\n';
+
+    auto then = timer::now();
+    auto train_epochs = nn.train(train_images_flattened, train_labels,
+                                 learning_rate,
+                                 min_epochs, max_epochs, error_threshold,
+                                 true);
+    auto train_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - then).count();
+
+    then = timer::now();
+    auto test_accuracy = nn.test(test_images_flattened, test_labels, n_tests);
+    auto test_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - then).count();
+
+    std::cout << "Train time = " << train_time << " s\n"
+              << "Train epochs = " << train_epochs << "\n\n"
+              << "Test time = " << test_time << " s\n"
+              << "Test accuracy = " << test_accuracy << '\n';
+
+    radann::diff::get_tape<radann::real>()->stats();
 
     int i = -1;
     do
     {
-        std::cout << "\nEnter test image index: ";
+        std::cout << "\nEnter image index (0..9999): ";
         std::cin >> i;
         if (i == -1)
             break;
@@ -198,8 +224,6 @@ int main()
                   << "Predicted: " << to_digit(nn.predict(test_images_flattened(i))) << "\n\n";
     }
     while (true);
-
-    //nn.save((dir + "learned_parameters").c_str());
 
     std::cin.get();
 }

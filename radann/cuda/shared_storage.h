@@ -19,8 +19,10 @@ namespace radann::cuda
     public:
         shared_storage(const shared_storage&) = delete;
 
-        void copy_from(const T*, size_t, size_t = 0);
-        void copy_from(const host_buffer<T>&, size_t = 0);
+        void copy(const T*, size_t, size_t = 0);
+        void copy(const host_buffer<T>&, size_t = 0);
+
+        void zero(size_t, size_t);
 
         void add_ref();
         void remove_ref();
@@ -47,10 +49,7 @@ namespace radann::cuda
         : _size(size)
     {
         cudaMalloc(&_data, _size * sizeof(T));
-        cudaMemset(_data, 0, _size * sizeof(T));
-        auto status = cudaDeviceSynchronize();
-        if (status != cudaError_t::cudaSuccess)
-            throw std::bad_alloc();
+        zero(_size, 0);
     }
 
     template<typename T>
@@ -58,7 +57,7 @@ namespace radann::cuda
         : _size(size)
     {
         cudaMalloc(&_data, _size * sizeof(T));
-        copy_from(device_ptr, size);
+        copy(device_ptr, size);
     }
 
     template<typename T>
@@ -68,7 +67,7 @@ namespace radann::cuda
     }
 
     template<typename T>
-    void shared_storage<T>::copy_from(const T *device_ptr, size_t size, size_t offset)
+    void shared_storage<T>::copy(const T *device_ptr, size_t size, size_t offset)
     {
         cudaMemcpy(_data + offset, device_ptr, size * sizeof(T),
                    cudaMemcpyKind::cudaMemcpyDeviceToDevice);
@@ -78,11 +77,19 @@ namespace radann::cuda
     }
 
     template<typename T>
-    void shared_storage<T>::copy_from(const host_buffer<T> &host, size_t offset)
+    void shared_storage<T>::copy(const host_buffer<T> &host, size_t offset)
     {
-
         cudaMemcpy(_data + offset, host.data(), host.size() * sizeof(T),
                    cudaMemcpyKind::cudaMemcpyHostToDevice);
+        auto status = cudaDeviceSynchronize();
+        if (status != cudaError_t::cudaSuccess)
+            throw std::bad_alloc();
+    }
+
+    template<typename T>
+    void shared_storage<T>::zero(size_t size, size_t offset)
+    {
+        cudaMemset(_data + offset, 0, size * sizeof(T));
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();

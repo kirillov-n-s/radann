@@ -4,41 +4,6 @@
 
 namespace radann::core
 {
-    /*struct dot
-    {
-        static constexpr bool requires_validation = true;
-
-        template<typename Lhs, typename Rhs>
-        void validate(const expr::base<Lhs> &lhs, const expr::base<Rhs> &rhs) const
-        {
-            if (lhs.self().shape() != rhs.self().shape())
-                throw std::invalid_argument("Shape mismatch in dot product.");
-        }
-
-        template <size_t N, bool ADLhs, bool ADRhs, typename T>
-        auto operator()(const array<N, ADLhs, T> &x, const array<N, ADRhs, T> &y) const
-        {
-            auto res = make_array<ADLhs || ADRhs, T>(radann::make_shape());
-            cuda::cublas::dot(x.data(), y.data(), res.data(), x.size());
-            return res;
-        }
-    };
-
-    struct outer
-    {
-        static constexpr bool requires_validation = false;
-
-        template <bool ADLhs, bool ADRhs, typename T>
-        auto operator()(const array<1, ADLhs, T> &x, const array<1, ADRhs, T> &y) const
-        {
-            auto rows = x.size();
-            auto cols = y.size();
-            auto res = make_array<ADLhs || ADRhs, T>(radann::make_shape(rows, cols));
-            cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
-            return res;
-        }
-    };*/
-
     template<bool LTrans, bool RTrans>
     struct matmul
     {
@@ -78,11 +43,20 @@ namespace radann::core
 
             if (xrank == 1)
             {
-                auto rows = x.size();
-                auto cols = y.size();
-                auto res = array<T, Strategy> { make_shape(rows, cols) };
-                cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
-                return res;
+                if constexpr(RTrans)
+                {
+                    auto rows = x.size();
+                    auto cols = y.size();
+                    auto res = array<T, Strategy>{ make_shape(rows, cols) };
+                    cuda::cublas::ger(x.data(), y.data(), res.data(), rows, cols);
+                    return res;
+                }
+                else
+                {
+                    auto res = array<T, Strategy> { make_shape() };
+                    cuda::cublas::dot(x.data(), y.data(), res.data(), x.size());
+                    return res;
+                }
             }
 
             auto rows = x.shape(LTrans);
@@ -93,19 +67,4 @@ namespace radann::core
             return res;
         }
     };
-
-    /*struct trans
-    {
-        static constexpr bool requires_validation = false;
-
-        template <typename T>
-        auto operator()(const array<T> &x) const
-        {
-            auto rows = x.shape(0);
-            auto cols = x.shape(1);
-            auto res = make_array<T>(core::make_shape(cols, rows));
-            cuda::cublas::geam(x.data(), res.data(), rows, cols);
-            return res;
-        }
-    };*/
 }

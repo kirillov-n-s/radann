@@ -7,8 +7,8 @@ namespace radann::diff
     {
     public:
         using entry_type = entry;
-        using entry_type::index_type;
         static constexpr bool does_record = false;
+        static constexpr bool does_link = false;
 
     protected:
         template<typename... Types>

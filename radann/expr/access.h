@@ -1,5 +1,4 @@
 #pragma once
-#include <optional>
 #include "base.h"
 #include "../core/shape.h"
 
@@ -20,7 +19,7 @@ namespace radann::expr
         size_t _size;
         core::shape _shape;
 
-        access(const T*, size_t, const core::shape&, const typename Strategy::index_type&);
+        access(const T*, size_t, const core::shape&, typename Strategy::index_type);
 
     public:
         __host__ __device__ inline
@@ -39,7 +38,7 @@ namespace radann::expr
 {
     template<typename T, typename Strategy>
     access<T, Strategy>::access(const T *data, size_t size, const core::shape &shape,
-                                  const typename Strategy::index_type &grad_index)
+                                typename Strategy::index_type grad_index)
         : Strategy::entry_type(grad_index),
           _data(data), _size(size), _shape(shape)
     {}

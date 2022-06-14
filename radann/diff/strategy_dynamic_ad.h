@@ -9,36 +9,27 @@ namespace radann::diff
     {
     public:
         using entry_type = entry;
-        using entry_type::index_type;
         static constexpr bool does_record = true;
-
-    private:
-        index_type::value_type grad_index_value() const;
+        static constexpr bool does_link = true;
 
     protected:
         strategy_dynamic_ad();
         strategy_dynamic_ad(const core::shape&, bool);
-        strategy_dynamic_ad(const core::shape&, size_t, const index_type&, bool);
+        strategy_dynamic_ad(const core::shape&, size_t, index_type, bool);
 
         template<typename Tag = backward_default, typename Expr>
         void record_grad(const expr::base<Expr>&) const;
+        void link_grad(index_type);
 
     public:
-        core::array<T, strategy_dynamic_ad<T>> get_grad() const;
-        template<typename Expr>
-        void set_grad(const expr::base<Expr>&) const;
-        void set_grad() const;
+        ~strategy_dynamic_ad();
+        core::array<T, strategy_dynamic_ad<T>> grad() const;
+        void deactivate_grad();
     };
 }
 
 namespace radann::diff
 {
-    template<typename T>
-    strategy_dynamic_ad<T>::index_type::value_type strategy_dynamic_ad<T>::grad_index_value() const
-    {
-        return grad_index().value();
-    }
-
     template<typename T>
     strategy_dynamic_ad<T>::strategy_dynamic_ad()
         : entry_type()
@@ -47,18 +38,18 @@ namespace radann::diff
     template<typename T>
     strategy_dynamic_ad<T>::strategy_dynamic_ad(const core::shape &shape, bool ad)
         : entry_type(ad
-                ? index_type { diff::get_tape<T>()->create_grad(shape) }
-                : index_type {})
+                     ? get_tape<T>()->create_grad(shape)
+                     : null_index)
     {}
 
     template<typename T>
     strategy_dynamic_ad<T>::strategy_dynamic_ad(const core::shape &shape, size_t offset,
-                                                const index_type &base_index, bool derive)
-        : entry_type(!base_index.has_value()
-                ? index_type {}
+                                                index_type base_index, bool derive)
+        : entry_type(base_index == null_index
+                ? null_index
                 : (derive
-                   ? index_type { diff::get_tape<T>()->derive_grad(base_index.value(), shape, offset) }
-                   : base_index))
+                   ? get_tape<T>()->derive_grad(base_index, shape, offset)
+                   : get_tape<T>()->copy_grad(base_index)))
     {}
 
     template<typename T>
@@ -69,26 +60,38 @@ namespace radann::diff
         if (is_ad(expr_self) && ad())
         {
             propagate<Tag>(expr_self, func::constant<T>(1));
-            get_tape<T>()->push_lvalue(grad_index_value());
+            get_tape<T>()->push_statement(_index);
         }
     }
 
     template<typename T>
-    core::array<T, strategy_dynamic_ad<T>> strategy_dynamic_ad<T>::get_grad() const
+    void strategy_dynamic_ad<T>::link_grad(index_type index)
     {
-        return core::array<T, strategy_dynamic_ad<T>> {get_tape<T>()->get_grad(grad_index_value()) };
+        deactivate_grad();
+        _index = index;
+        if (ad())
+            get_tape<T>()->copy_grad(_index);
     }
 
     template<typename T>
-    template<typename Expr>
-    void strategy_dynamic_ad<T>::set_grad(const expr::base<Expr> &expr) const
+    strategy_dynamic_ad<T>::~strategy_dynamic_ad()
     {
-        get_tape<T>()->set_grad(grad_index_value(), expr);
+        deactivate_grad();
     }
 
     template<typename T>
-    void strategy_dynamic_ad<T>::set_grad() const
+    core::array<T, strategy_dynamic_ad<T>> strategy_dynamic_ad<T>::grad() const
     {
-        set_grad(func::constant<T>(1));
+        if (!ad())
+            throw std::runtime_error("Cannot get gradient of non-ad array.");
+        return core::array<T, strategy_dynamic_ad<T>> {get_tape<T>()->get_grad(_index) };
+    }
+
+    template<typename T>
+    void strategy_dynamic_ad<T>::deactivate_grad()
+    {
+        if (ad())
+            get_tape<T>()->delete_grad(_index);
+        _index = null_index;
     }
 }
