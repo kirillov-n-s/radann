@@ -77,7 +77,7 @@ namespace radann::diff
         auto& gap = _gradients[index];
         gap.nrefs = 1;
         auto& grad = gap.value;
-        if (grad.shape() == shape)
+        if (grad.shape() == shape && grad.storage()->nrefs() == 1)
             grad.zero();
         else
             grad >>= array_no_ad<T> { shape, false };

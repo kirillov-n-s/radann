@@ -25,7 +25,6 @@ radann::array<> read_mnist_images(const char *path)
         n_cols = 0;
 
     file.read((char*)&magic, sizeof(magic));
-    //magic = reverse_endian(magic);
     file.read((char*)&n_images, sizeof(n_images));
     n_images = reverse_endian(n_images);
     file.read((char*)&n_rows, sizeof(n_rows));
@@ -58,7 +57,6 @@ radann::array<> read_mnist_labels(const char *path)
         n_digits = 10;
 
     file.read((char*)&magic, sizeof(magic));
-    //magic = reverse_endian(magic);
     file.read((char*)&n_labels, sizeof(n_labels));
     n_labels = reverse_endian(n_labels);
 
@@ -76,7 +74,7 @@ radann::array<> read_mnist_labels(const char *path)
                               false);
 }
 
-auto to_digit(const radann::array<> &output)
+int to_digit(const radann::array<> &output)
 {
     auto host = output.host();
     return std::max_element(host.begin(), host.end()) - host.begin();
@@ -146,14 +144,14 @@ public:
                 bias -= bias.grad() * lr;
                 bias.grad().zero();
             }
-            loss.deactivate_grad();
+            loss.inactive_grad();
             radann::clear();
         }
 
         for (auto& weight : _weights)
-            weight.deactivate_grad();
+            weight.inactive_grad();
         for (auto& bias : _biases)
-            bias.deactivate_grad();
+            bias.inactive_grad();
         radann::clear();
 
         if (verbose)
@@ -162,12 +160,18 @@ public:
         return i;
     }
 
-    radann::real test(const radann::array<>& inputs, const radann::array<>& labels, int n_tests)
+    auto test(const radann::array<>& inputs, const radann::array<>& labels, int n_tests)
     {
+        std::vector<int> incorrect_indices;
         int n_correct = 0;
         for (int i = 0; i < n_tests; i++)
-            n_correct += to_digit(predict(inputs(i))) == to_digit(labels(i));
-        return (radann::real)n_correct / n_tests;
+        {
+            auto equal = to_digit(predict(inputs(i))) == to_digit(labels(i));
+            n_correct += equal;
+            if (!equal)
+                incorrect_indices.push_back(i);
+        }
+        return std::make_pair((radann::real)n_correct / n_tests, incorrect_indices);
     }
 };
 
@@ -189,9 +193,9 @@ int main()
     size_t n_hidden2 = 128;
 
     auto learning_rate = 4.0f;
-    auto min_epochs = 10;
     auto max_epochs = train_images_flattened.shape(1);
-    auto error_threshold = 0.03f;
+    auto min_epochs = 10;
+    auto error_threshold = 0.01f;
     auto n_tests = test_images_flattened.shape(1);
 
     neural_network nn { n_inputs, n_hidden1, n_hidden2, n_outputs };
@@ -204,13 +208,18 @@ int main()
     auto train_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - then).count();
 
     then = timer::now();
-    auto test_accuracy = nn.test(test_images_flattened, test_labels, n_tests);
+    const auto& [test_accuracy, incorrect_indices] = nn.test(test_images_flattened, test_labels, n_tests);
     auto test_time = std::chrono::duration_cast<std::chrono::seconds>(timer::now() - then).count();
 
     std::cout << "Train time = " << train_time << " s\n"
               << "Train epochs = " << train_epochs << '\n'
               << "Test time = " << test_time << " s\n"
-              << "Test accuracy = " << test_accuracy << '\n';
+              << "Test accuracy = " << test_accuracy << "\n\n";
+
+    std::cout << "Incorrect predictions at indices:\n";
+    for (const auto& index : incorrect_indices)
+        std::cout << index << "; ";
+    std::cout << '\n';
 
     int i = -1;
     do

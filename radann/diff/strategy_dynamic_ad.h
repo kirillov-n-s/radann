@@ -24,7 +24,7 @@ namespace radann::diff
     public:
         ~strategy_dynamic_ad();
         core::array<T, strategy_dynamic_ad<T>> grad() const;
-        void deactivate_grad();
+        void inactive_grad();
     };
 }
 
@@ -67,7 +67,7 @@ namespace radann::diff
     template<typename T>
     void strategy_dynamic_ad<T>::link_grad(index_type index)
     {
-        deactivate_grad();
+        inactive_grad();
         _index = index;
         if (ad())
             get_tape<T>()->copy_grad(_index);
@@ -76,7 +76,7 @@ namespace radann::diff
     template<typename T>
     strategy_dynamic_ad<T>::~strategy_dynamic_ad()
     {
-        deactivate_grad();
+        inactive_grad();
     }
 
     template<typename T>
@@ -88,7 +88,7 @@ namespace radann::diff
     }
 
     template<typename T>
-    void strategy_dynamic_ad<T>::deactivate_grad()
+    void strategy_dynamic_ad<T>::inactive_grad()
     {
         if (ad())
             get_tape<T>()->delete_grad(_index);
