@@ -13,7 +13,7 @@ namespace radann::diff
     void propagate(const expr::binary<Op, Lhs, Rhs>&, const expr::base<Expr>&);
 
     template<typename Tag, typename Seq, typename Expr>
-    void propagate(const expr::element<Seq>&, const expr::base<Expr>&);
+    void propagate(const expr::generator<Seq>&, const expr::base<Expr>&);
 
     template<typename Tag, typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg>&, const expr::base<Expr>&);
@@ -40,7 +40,7 @@ namespace radann::diff
     }
 
     template<typename Tag, typename Seq, typename Expr>
-    void propagate(const expr::element<Seq>&, const expr::base<Expr>&) {}
+    void propagate(const expr::generator<Seq>&, const expr::base<Expr>&) {}
 
     template<typename Tag, typename Op, typename Arg, typename Expr>
     void propagate(const expr::unary<Op, Arg> &unary, const expr::base<Expr> &mult)

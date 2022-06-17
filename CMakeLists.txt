@@ -17,7 +17,7 @@ add_executable(coursework main.cu
         radann/expr/unary.h
         radann/expr/binary.h
         radann/expr/access.h
-        radann/expr/element.h
+        radann/expr/generator.h
         radann/oper/sequence.h
         radann/func/sequence.h
         radann/oper/random.h
@@ -50,4 +50,4 @@ add_executable(coursework main.cu
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
 
-target_link_libraries(coursework cuBLAS cuSOLVER)
+target_link_libraries(coursework cuBLAS)

@@ -1,5 +1,5 @@
 #pragma once
-#include "../expr/element.h"
+#include "../expr/generator.h"
 #include "../oper/sequence.h"
 
 namespace radann::func

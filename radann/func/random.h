@@ -1,6 +1,6 @@
 #pragma once
 #include <random>
-#include "../expr/element.h"
+#include "../expr/generator.h"
 #include "../oper/random.h"
 
 namespace radann::func

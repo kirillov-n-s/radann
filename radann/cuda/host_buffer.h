@@ -70,7 +70,7 @@ namespace radann::cuda
         : _data(std::make_unique<T[]>(size)), _size(size)
     {
         cudaMemcpy(_data.get(), device_ptr, _size * sizeof(T),
-                                 cudaMemcpyKind::cudaMemcpyDeviceToHost);
+                   cudaMemcpyKind::cudaMemcpyDeviceToHost);
         auto status = cudaDeviceSynchronize();
         if (status != cudaError_t::cudaSuccess)
             throw std::bad_alloc();

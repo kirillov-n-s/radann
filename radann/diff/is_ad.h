@@ -1,7 +1,7 @@
 #pragma once
 #include "../expr/access.h"
 #include "../expr/binary.h"
-#include "../expr/element.h"
+#include "../expr/generator.h"
 #include "../expr/unary.h"
 
 namespace radann::diff
@@ -13,7 +13,7 @@ namespace radann::diff
     bool is_ad(const expr::binary<Op, Lhs, Rhs>&);
 
     template<typename Seq>
-    bool is_ad(const expr::element<Seq>&);
+    bool is_ad(const expr::generator<Seq>&);
 
     template<typename Op, typename Arg>
     bool is_ad(const expr::unary<Op, Arg>&);
@@ -34,7 +34,7 @@ namespace radann::diff
     }
 
     template<typename Seq>
-    bool is_ad(const expr::element<Seq> &term)
+    bool is_ad(const expr::generator<Seq> &term)
     {
         return false;
     }
