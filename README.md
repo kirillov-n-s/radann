@@ -1,7 +1,6 @@
 # Radann
 
-Radann stands for **Reverse-mode Automatic Differentiation for Artificial Neural Networks**
-and is _(hopefully going to be, some day)_ a modern C++ library for multidimentional array handling and automatic differentiation,
+Radann is _(hopefully going to be, some day)_ a modern C++ library for multidimentional array handling and automatic differentiation,
 implemented using smart expression templates with GPU parallelism and calls to optimized CUDA libraries.
 
 As for now, it is a university coursework with a lot of unfinished and "just working" stuff that is subject to change.
