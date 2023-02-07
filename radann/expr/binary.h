@@ -31,8 +31,8 @@ namespace radann::expr
         const Lhs& lhs() const;
         const Rhs& rhs() const;
 
-        template<typename Op, typename Lhs, typename Rhs>
-        friend inline auto make_expr(const Op&, const base<Lhs>&, const base<Rhs>&);
+        template<typename _Op, typename _Lhs, typename _Rhs>
+        friend inline auto make_expr(const _Op&, const base<_Lhs>&, const base<_Rhs>&);
     };
 }
 

@@ -3,6 +3,7 @@
 #include <initializer_list>
 #include <numeric>
 #include <iostream>
+#include <iterator>
 
 namespace radann::core
 {

@@ -14,8 +14,8 @@ namespace radann::diff
         tape_context(const tape_context&) = delete;
         ~tape_context();
 
-        template<typename T>
-        friend tape<T>* get_tape();
+        template<typename _T>
+        friend tape<_T>* get_tape();
     };
 }
 

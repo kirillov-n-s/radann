@@ -8,7 +8,7 @@ namespace radann::func
     inline auto constant(T);
 
     inline auto operator""_C(long double);
-
+    inline auto operator""_dC(long double);
     inline auto operator""_fC(long double);
 
     template<typename T>
@@ -27,6 +27,11 @@ namespace radann::func
     }
 
     inline auto operator""_C(long double value)
+    {
+        return constant((radann::core::real)value);
+    }
+
+    inline auto operator""_dC(long double value)
     {
         return constant((double)value);
     }
@@ -50,4 +55,5 @@ namespace radann::func
 }
 
 using radann::func::operator""_C;
+using radann::func::operator""_dC;
 using radann::func::operator""_fC;

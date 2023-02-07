@@ -50,4 +50,4 @@ add_executable(coursework main.cu
 set_target_properties(coursework PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
 
-target_link_libraries(coursework cuBLAS)
+target_link_libraries(coursework cublas)

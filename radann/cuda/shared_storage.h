@@ -35,10 +35,10 @@ namespace radann::cuda
 
         host_buffer<T> host(size_t, size_t = 0) const;
 
-        template<typename T>
-        friend shared_storage<T>* make_storage(size_t);
-        template<typename T>
-        friend shared_storage<T>* make_storage(const T*, size_t);
+        template<typename _T>
+        friend shared_storage<_T>* make_storage(size_t);
+        template<typename _T>
+        friend shared_storage<_T>* make_storage(const _T*, size_t);
     };
 }
 

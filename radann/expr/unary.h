@@ -28,8 +28,8 @@ namespace radann::expr
         const Op& op() const;
         const Arg& arg() const;
 
-        template<typename Op, typename Arg>
-        friend inline auto make_expr(const Op&, const base<Arg>&);
+        template<typename _Op, typename _Arg>
+        friend inline auto make_expr(const _Op&, const base<_Arg>&);
     };
 }
 

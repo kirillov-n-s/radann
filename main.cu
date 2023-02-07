@@ -1,6 +1,8 @@
-#include "radann/radann.h"
 #include <chrono>
 #include <fstream>
+#include <utility>
+
+#include "radann/radann.h"
 
 using timer = std::chrono::system_clock;
 
@@ -89,7 +91,7 @@ private:
 public:
     neural_network(const std::initializer_list<size_t> &layers)
     {
-        auto init = radann::uniform<radann::real>() * 0.6_fC - 0.3_fC;
+        auto init = radann::uniform<radann::real>() * 0.6_C - 0.3_C;
         auto n = layers.size();
         auto data = layers.begin();
         for (int i = 1; i < n; i++)
@@ -126,7 +128,7 @@ public:
             const auto& label = labels(i);
             const auto& output = predict(inputs(i), true);
             auto loss = radann::sum(radann::pow2(label - output) / radann::constant<radann::real>(output.size()));
-            loss.grad() = 1._fC;
+            loss.grad() = 1._C;
 
             error_sum += *loss.host().data();
             mean_error = error_sum / i;
@@ -177,15 +179,15 @@ public:
 
 int main()
 {
-    std::string dir = R"(C:\Users\user\Desktop\University\!Coursework\coursework\mnist\)";
+    std::string dir = "../mnist/";
 
     auto train_images = read_mnist_images((dir + "train-images.idx3-ubyte").c_str());
     auto train_labels = read_mnist_labels((dir + "train-labels.idx1-ubyte").c_str());
     auto test_images  = read_mnist_images((dir + "t10k-images.idx3-ubyte").c_str());
     auto test_labels  = read_mnist_labels((dir + "t10k-labels.idx1-ubyte").c_str());
 
-    radann::array<> train_images_flattened = train_images.flatten(1) / 255._fC;
-    radann::array<> test_images_flattened  = test_images.flatten(1) / 255._fC;
+    radann::array<> train_images_flattened = train_images.flatten(1) / 255._C;
+    radann::array<> test_images_flattened  = test_images.flatten(1) / 255._C;
 
     auto n_inputs  = train_images_flattened.shape(0);
     auto n_outputs = train_labels.shape(0);
@@ -194,7 +196,7 @@ int main()
 
     auto learning_rate = 4.0f;
     auto max_epochs = train_images_flattened.shape(1);
-    auto min_epochs = 10;
+    auto min_epochs = max_epochs;
     auto error_threshold = 0.01f;
     auto n_tests = test_images_flattened.shape(1);
 

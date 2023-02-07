@@ -1,4 +1,6 @@
 #pragma once
+
+#include <algorithm>
 #include "prop.h"
 
 namespace radann::cuda

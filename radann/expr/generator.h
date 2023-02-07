@@ -24,8 +24,8 @@ namespace radann::expr
         auto shape() const;
         auto shape(size_t) const;
 
-        template<typename Seq>
-        friend inline auto make_expr(const Seq&);
+        template<typename _Seq>
+        friend inline auto make_expr(const _Seq&);
     };
 }
 

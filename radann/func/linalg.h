@@ -9,7 +9,7 @@ namespace radann::func
     template <typename Lhs, typename Rhs>
     inline auto outer(const expr::base<Lhs>&, const expr::base<Rhs>&);*/
 
-    template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
+    template <bool LTrans = false, bool RTrans = false, typename Lhs, typename Rhs>
     inline auto matmul(const expr::base<Lhs>&, const expr::base<Rhs>&);
 
     /*template <typename Arg>
@@ -33,7 +33,7 @@ namespace radann::func
         return expr::make_eager(oper::outer{}, lhs, rhs);
     }*/
 
-    template <bool LTrans = false, bool RTrans = false, typename Lhs, typename Rhs>
+    template <bool LTrans, bool RTrans, typename Lhs, typename Rhs>
     inline auto matmul(const expr::base<Lhs>& lhs, const expr::base<Rhs>& rhs)
     {
         return core::eager(core::matmul<LTrans, RTrans>{}, lhs, rhs);
